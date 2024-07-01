@@ -7,7 +7,7 @@
 ;; URL: https://github.com/hubisan/lordar-mode-line
 ;; Version: 0.1.0
 ;; Package-Requires: ((emacs "29.4"))
-;; Keywords: mode-line
+;; Keywords: mode-line faces
 
 ;; This file is not part of GNU Emacs
 
@@ -37,6 +37,8 @@
 ;;; Code:
 
 ;;;; Requirements
+
+(require 'lordar-mode-line-segments)
 
 ;;;; Customization
 
@@ -171,7 +173,7 @@ If the minibuffer is active return the last selected window."
               (minibuffer-selected-window)
             win))))
 
-(defun doom-modeline--window-active-p ()
+(defun lordar-mode-line--window-active-p ()
   "Check if the window is active."
   (when lordar-mode-line--current-window
     (eq (lordar-mode-line--selected-window) lordar-mode-line--current-window)))
@@ -192,8 +194,7 @@ If the minibuffer is active return the last selected window."
   "Activate the lordar-mode-line."
   (lordar-mode-line--update-selected-window)
   (add-hook 'window-selection-change-functions
-            #'lordar-mode-line--update-selected-window)
-  )
+            #'lordar-mode-line--update-selected-window))
 
 (defun lordar-mode-line--deactivate ()
   "Deactivate the lordar-mode-line."

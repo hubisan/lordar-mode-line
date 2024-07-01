@@ -29,14 +29,10 @@
 
 ;;;; Version Control State
 
-;; Just use `(vc-mode-line-state (vc-state (buffer-file-name)))'
-;; and get the symbol from the returned list.
-;; `(nth 2 (vc-mode-line-state (vc-state (buffer-file-name))))'
-
 (defvar-local lordar-mode-line-segments--vc-text nil
   "Mode line segment string indicating the current state of `vc-mode'.")
 
-(defun lodar-mode-line-segments--vc-get-branch (vc-mode-str backend)
+(defun lordar-mode-line-segments--vc-get-branch (vc-mode-str backend)
   "Return name of current file's branch for BACKEND according to `vc-mode'.
 VC-MODE-STR is expected to be the value of `vc-mode' in the current buffer.
 If `vc-display-status' is nil, return the name of BACKEND."
@@ -49,60 +45,71 @@ If `vc-display-status' is nil, return the name of BACKEND."
         (substring (vc-working-revision buffer-file-name backend) 0 7))
       "???"))
 
-(defun mood-line-segments--vc-update (&rest _args)
-  "Update `mood-line-segment-vc--text' against the current VCS state."
-  (setq mood-line-segment-vc--text
-        (when-let* ((vc-active (and vc-mode buffer-file-name))
-                    (backend (vc-backend buffer-file-name))
-                    (state (vc-state buffer-file-name))
-                    (rev (mood-line-segment-vc--rev vc-mode backend)))
-          (cond
-           ((memq state '(edited added))
-            (format #("%s %s"
-                      0 2 (face mood-line-status-info))
-                    (mood-line--get-glyph :vc-added)
-                    rev))
-           ((eq state 'needs-merge)
-            (format #("%s %s"
-                      0 2 (face mood-line-status-warning))
-                    (mood-line--get-glyph :vc-needs-merge)
-                    rev))
-           ((eq state 'needs-update)
-            (format #("%s %s"
-                      0 2 (face mood-line-status-warning))
-                    (mood-line--get-glyph :vc-needs-update)
-                    rev))
-           ((memq state '(removed conflict unregistered))
-            (format #("%s %s"
-                      0 2 (face mood-line-status-error))
-                    (mood-line--get-glyph :vc-conflict)
-                    rev))
-           (t
-            (format #("%s %s"
-                      0 5 (face mood-line-status-neutral))
-                    (mood-line--get-glyph :vc-good)
-                    rev))))))
+;; TODO
+;; (defun lordar-mode-line--vc-update (&rest _args)
+;;   "Update `mood-line-segment-vc--text' against the current VCS state."
+;;   (setq mood-line-segment-vc--text
+;;         (when-let* ((vc-active (and vc-mode buffer-file-name))
+;;                     (backend (vc-backend buffer-file-name))
+;;                     (state (vc-state buffer-file-name))
+;;                     (rev (mood-line-segment-vc--rev vc-mode backend)))
+;;           (cond
+;;            ((memq state '(edited added))
+;;             (format #("%s %s"
+;;                       0 2 (face mood-line-status-info))
+;;                     (mood-line--get-glyph :vc-added)
+;;                     rev))
+;;            ((eq state 'needs-merge)
+;;             (format #("%s %s"
+;;                       0 2 (face mood-line-status-warning))
+;;                     (mood-line--get-glyph :vc-needs-merge)
+;;                     rev))
+;;            ((eq state 'needs-update)
+;;             (format #("%s %s"
+;;                       0 2 (face mood-line-status-warning))
+;;                     (mood-line--get-glyph :vc-needs-update)
+;;                     rev))
+;;            ((memq state '(removed conflict unregistered))
+;;             (format #("%s %s"
+;;                       0 2 (face mood-line-status-error))
+;;                     (mood-line--get-glyph :vc-conflict)
+;;                     rev))
+;;            (t
+;;             (format #("%s %s"
+;;                       0 5 (face mood-line-status-neutral))
+;;                     (mood-line--get-glyph :vc-good)
+;;                     rev))))))
 
 ;;;; Project Directory
 
 (defun lordar-mode-line--project-root-basename ()
   "Return the project root basename.
 If not in a project the basename of `default-directory' is returned."
-  (let* ((path
+  (let* ((root-path
           (if-let* ((project (project-current)))
               (project-root project)
             default-directory))
          (basename (file-name-nondirectory (directory-file-name
-                                            (file-local-name path)))))
+                                            (file-local-name root-path)))))
     basename))
 
 (defun lordar-mode-line--project-relative-directory ()
   "Return the directory path relative to the root of the project.
 If not in a project the relative path of `default-directory' is returned."
-  (let* ((basename (lordar-mode-line--project-root-basename))
-         (filename (buffer-file-name))
-         (relative (file-relative-name (file-name-directory filename) (vc-root-dir))))
-    relative))
+  (let ((filename (buffer-file-name))
+        (project-root (file-local-name (if-let* ((project (project-current)))
+                                           (project-root project)
+                                         default-directory)) ))
+    (directory-file-name
+     (concat
+      (concat (file-name-nondirectory (directory-file-name project-root)) "/")
+      (when-let (relative-path
+                 (file-relative-name
+                  (or (and filename (file-name-directory filename)) "./")
+                  project-root))
+        (if (string= relative-path "./")
+            ""
+          relative-path))))))
 
 (provide 'lordar-mode-line-segments)
 
