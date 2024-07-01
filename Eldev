@@ -1,0 +1,24 @@
+; -*- mode: emacs-lisp; lexical-binding: t -*-
+
+(eval-when-compile
+  (defvar eldev-project-main-file)
+  (defvar eldev-add-loading-roots)
+  (defvar checkdoc-verb-check-experimental-flag)
+  (declare-function eldev-use-package-archive "eldev")
+  (declare-function eldev-add-loading-roots "eldev")
+  (declare-function eldev-add-extra-dependencies "eldev"))
+
+(setq eldev-project-main-file "my-package.el")
+
+(eldev-use-package-archive 'gnu-elpa)
+(eldev-use-package-archive 'nongnu-elpa)
+(eldev-use-package-archive 'melpa)
+
+;; (setq eldev-test-framework 'buttercup)
+(eldev-add-loading-roots 'test "tests")
+
+;; Tell checkdoc not to demand two spaces after a period.
+(setq sentence-end-double-space nil)
+
+;; Dont' check docstring for correct verb use.
+(setq checkdoc-verb-check-experimental-flag nil)

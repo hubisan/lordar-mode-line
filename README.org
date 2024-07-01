@@ -1,0 +1,121 @@
+#+STARTUP: content
+
+* Modify the Template for Your New Package
+
+When this template is used for a new package the following changes are needed:
+
+- [ ] Add your package file(s). You can use the file [[file:my-package.el][my-package.el]] as a template.
+- [ ] Remove the file [[file:my-package.el][my-package.el]].
+- [ ] Change the main file in the [[file:Eldev::3][Eldev]]. 
+- [ ] Add your tests in [[file:tests/][./tests]]. You can use =test-my-package.el= as a template which requires =test-helper.el=. This is an example of a file with auxiliary functions that can be used in other test files.
+- [ ] Change the Emacs version that should be tested in [[file:.github/workflows/tests.yml][tests.yml]]. For linting and compiling the latest stable Emacs version is enough. Tests on the other hand should be done with the Emacs versions you want to support.
+- [ ] Remove this section.
+- [ ] Change the url of the [[file:README.org::39][badge]] to your repositiory.   
+
+  
+** Tips for Documentation
+
+*** Foldable Section
+
+The following construct can be used to make parts of this file foldable when rendered on github. This can be used to for instance describe multiple installation tools.
+
+@@html:<details>@@
+@@html:<summary>@@
+*Title of Foldable Section*
+@@html:</summary>@@
+
+Content of foldable section.
+  
+@@html:</details>@@
+
+* Name of Package                                                :Noexport_2:
+
+[[https://www.gnu.org/licenses/gpl-3.0][https://img.shields.io/badge/License-GPL%20v3-blue.svg]] [[https://github.com/hubisan/emacs-lisp-package-template/actions/workflows/tests.yml][https://github.com/hubisan/emacs-lisp-package-template/actions/workflows/tests.yml/badge.svg]]
+
+# Purpose of package
+
+** Main features                                                :noexport_0:
+
+# List of main features of the package
+# - feature 1
+# - feature 2
+
+-----
+
+** Contents
+
+- [[#installation][Installation]]
+- [[#usage][Usage]]
+- [[#customization][Customization]]
+- [[#key-bindings][Key Bindings]]
+- [[#changelog][Changelog]]
+- [[#contributing][Contributing]]
+
+** Installation
+:PROPERTIES:
+:CUSTOM_ID: installation
+:END:
+
+# Describe how to install this package.
+
+*** Dependencies
+
+** Usage
+:PROPERTIES:
+:CUSTOM_ID: usage
+:END:
+
+# Describe the usage.
+
+** Customization
+:PROPERTIES:
+:CUSTOM_ID: customization
+:END:
+
+*** Variables
+
+Set the following variables to change the behaviour of the package:
+
+| Variable | Default | Description |
+|----------+---------+-------------|
+|          |         |             |
+
+*** Faces
+
+The following faces are defined:
+
+| Face | Description |
+|------+-------------|
+|      |             |
+|      |             |
+
+** Key Bindings
+:PROPERTIES:
+:CUSTOM_ID: key-bindings
+:END:
+
+# Whatever needs to be said about that.
+
+| Key | Action | Description |
+|-----+--------+-------------|
+|     |        |             |
+
+*** Hydra
+
+# Example of a hydra definition.
+
+** Changelog
+:PROPERTIES:
+:CUSTOM_ID: changelog
+:END:
+
+See the [[./CHANGELOG.org][changelog]].
+
+** Contributing
+:PROPERTIES:
+:CUSTOM_ID: contributing
+:END:
+
+Use the issue tracker to reports bugs, suggest improvements or propose new features. If you want to contribute please open a pull request after having opened a new issue.
+
+In any case please check out the [[./CONTRIBUTING.org::*Contributing][contributing guidelines]] beforehand.
