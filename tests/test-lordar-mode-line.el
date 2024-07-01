@@ -1,4 +1,4 @@
-;;; test-my-package.el --- Tests  -*- lexical-binding:t -*-
+;;; test-lordar-mode-line.el --- Tests  -*- lexical-binding:t -*-
 
 ;; Tests to check if the database functions are working.
 
@@ -7,7 +7,7 @@
 (require 'buttercup)
 (require 'ert)
 
-(require 'my-package)
+(require 'lordar-mode-line)
 
 ;;; Helpers
 
@@ -17,6 +17,6 @@
   (it "contains a spec with an expectation"
     (expect t :to-be t)))
 
-(provide 'test-my-package)
+(provide 'test-lordar-mode-line)
 
-;;; test-my-package.el ends here
+;;; test-lordar-mode-line.el ends here

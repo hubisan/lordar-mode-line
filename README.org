@@ -1,44 +1,16 @@
 #+STARTUP: content
 
-* Modify the Template for Your New Package
+* Lordar-mode-line                                               :Noexport_2:
 
-When this template is used for a new package the following changes are needed:
+[[https://www.gnu.org/licenses/gpl-3.0][https://img.shields.io/badge/License-GPL%20v3-blue.svg]] [[https://github.com/hubisan/lordar-mode-line/actions/workflows/tests.yml][https://github.com/hubisan/lordar-mode-line/actions/workflows/tests.yml/badge.svg]]
 
-- [ ] Add your package file(s). You can use the file [[file:my-package.el][my-package.el]] as a template.
-- [ ] Remove the file [[file:my-package.el][my-package.el]].
-- [ ] Change the main file in the [[file:Eldev::3][Eldev]]. 
-- [ ] Add your tests in [[file:tests/][./tests]]. You can use =test-my-package.el= as a template which requires =test-helper.el=. This is an example of a file with auxiliary functions that can be used in other test files.
-- [ ] Change the Emacs version that should be tested in [[file:.github/workflows/tests.yml][tests.yml]]. For linting and compiling the latest stable Emacs version is enough. Tests on the other hand should be done with the Emacs versions you want to support.
-- [ ] Remove this section.
-- [ ] Change the url of the [[file:README.org::39][badge]] to your repositiory.   
-
-  
-** Tips for Documentation
-
-*** Foldable Section
-
-The following construct can be used to make parts of this file foldable when rendered on github. This can be used to for instance describe multiple installation tools.
-
-@@html:<details>@@
-@@html:<summary>@@
-*Title of Foldable Section*
-@@html:</summary>@@
-
-Content of foldable section.
-  
-@@html:</details>@@
-
-* Name of Package                                                :Noexport_2:
-
-[[https://www.gnu.org/licenses/gpl-3.0][https://img.shields.io/badge/License-GPL%20v3-blue.svg]] [[https://github.com/hubisan/emacs-lisp-package-template/actions/workflows/tests.yml][https://github.com/hubisan/emacs-lisp-package-template/actions/workflows/tests.yml/badge.svg]]
-
-# Purpose of package
+A minimal mode-line for Emacs.
 
 ** Main features                                                :noexport_0:
 
-# List of main features of the package
-# - feature 1
-# - feature 2
+- =Lordar-mode-line= includes only a few built-in segments.
+- You can add your own segments (see the documentation for instructions). Custom segments can also be added to this documentation through a pull request.
+- By default, some major-mode-specific mode-line formats are defined and set up using major-mode hooks. You can customize these or add your own.
 
 -----
 
@@ -47,7 +19,7 @@ Content of foldable section.
 - [[#installation][Installation]]
 - [[#usage][Usage]]
 - [[#customization][Customization]]
-- [[#key-bindings][Key Bindings]]
+- [[#custom-segments][Custom Segments]]
 - [[#changelog][Changelog]]
 - [[#contributing][Contributing]]
 
@@ -89,20 +61,10 @@ The following faces are defined:
 |      |             |
 |      |             |
 
-** Key Bindings
+** Custom Segments
 :PROPERTIES:
-:CUSTOM_ID: key-bindings
+:CUSTOM_ID: custom-segments
 :END:
-
-# Whatever needs to be said about that.
-
-| Key | Action | Description |
-|-----+--------+-------------|
-|     |        |             |
-
-*** Hydra
-
-# Example of a hydra definition.
 
 ** Changelog
 :PROPERTIES:

@@ -25,6 +25,8 @@
 
 ;;;; Requirements
 
+(require 'project)
+
 ;;;; Version Control State
 
 ;; Just use `(vc-mode-line-state (vc-state (buffer-file-name)))'
@@ -83,19 +85,24 @@ If `vc-display-status' is nil, return the name of BACKEND."
 
 ;;;; Project Directory
 
-(defun lordar-mode-line--project-directory (filename)
-  "Return the project directory of FILE-PATH.
-If no project was found return the `default-directory'."
-  (let* ((root-directory
+(defun lordar-mode-line--project-root-basename ()
+  "Return the project root basename.
+If not in a project the basename of `default-directory' is returned."
+  (let* ((path
           (if-let* ((project (project-current)))
               (project-root project)
             default-directory))
-         (directory (directory-file-name
-                     (file-local-name root-directory)))
-         (directory-name)
+         (basename (file-name-nondirectory (directory-file-name
+                                            (file-local-name path)))))
+    basename))
 
-    )))
-
+(defun lordar-mode-line--project-relative-directory ()
+  "Return the directory path relative to the root of the project.
+If not in a project the relative path of `default-directory' is returned."
+  (let* ((basename (lordar-mode-line--project-root-basename))
+         (filename (buffer-file-name))
+         (relative (file-relative-name (file-name-directory filename) (vc-root-dir))))
+    relative))
 
 (provide 'lordar-mode-line-segments)
 

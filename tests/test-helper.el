@@ -6,10 +6,10 @@
 
 ;;; Functions
 
-(defun test-helper-file-read-contents (path)
-  "Return the contents of file at PATH."
+(defun test-helper-file-read-contents (file)
+  "Return the contents of FILE."
   (with-temp-buffer
-    (insert-file-contents path)
+    (insert-file-contents file)
     (buffer-string)))
 
 (defun test-helper-get-file-in-test-dir (file)

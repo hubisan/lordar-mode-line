@@ -8,7 +8,7 @@
   (declare-function eldev-add-loading-roots "eldev")
   (declare-function eldev-add-extra-dependencies "eldev"))
 
-(setq eldev-project-main-file "my-package.el")
+(setq eldev-project-main-file "lordar-mode-line.el")
 
 (eldev-use-package-archive 'gnu-elpa)
 (eldev-use-package-archive 'nongnu-elpa)
