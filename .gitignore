@@ -9,6 +9,14 @@ auto-save-list
 tramp
 .\#*
 
+# Eask
+.eask/
+dist/
+
+# packaging
+*-autoloads.el
+*-pkg.el
+
 # Eldev
 /.eldev/
 

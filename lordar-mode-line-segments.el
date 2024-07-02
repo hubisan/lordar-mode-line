@@ -26,6 +26,7 @@
 ;;;; Requirements
 
 (require 'project)
+(require 'vc)
 
 ;;;; Version Control State
 
@@ -82,7 +83,7 @@ If `vc-display-status' is nil, return the name of BACKEND."
 
 ;;;; Project Directory
 
-(defun lordar-mode-line--project-root-basename ()
+(defun lordar-mode-line-segments--project-root-basename ()
   "Return the project root basename.
 If not in a project the basename of `default-directory' is returned."
   (let* ((root
@@ -91,12 +92,12 @@ If not in a project the basename of `default-directory' is returned."
             default-directory)))
     (file-name-nondirectory (directory-file-name (file-local-name root)))))
 
-(defun lordar-mode-line--project-root-relative-directory ()
+(defun lordar-mode-line-segments--project-root-relative-directory ()
   "Return the directory path relative to the root of the project.
 If not in a project the `default-directory' is returned.
 Examples:
-- With project at ~/.emacs.d the function returns .emacs.d/modules
-  if visiting ~/.emacs.d/modules/lang-elisp.el.
+- With project at ~/.emacs.test the function returns .emacs.test/modules
+  if visiting ~/.emacs.test/modules/lang-elisp.el.
 - With no project the function returns ~/projects
   if visiting ~/projects/emacs-never-dies.org"
   (let* (directory)
