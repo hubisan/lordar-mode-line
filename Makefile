@@ -1,4 +1,7 @@
 # Makefile
+# Switch to Eask
+# Use this as base
+# https://github.com/emacs-lsp/lsp-mode/blob/master/Makefile
 
 .PHONY: help all test test-as-is lint compile clean run-emacs
 
