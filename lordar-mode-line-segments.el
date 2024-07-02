@@ -85,31 +85,30 @@ If `vc-display-status' is nil, return the name of BACKEND."
 (defun lordar-mode-line--project-root-basename ()
   "Return the project root basename.
 If not in a project the basename of `default-directory' is returned."
-  (let* ((root-path
+  (let* ((root
           (if-let* ((project (project-current)))
               (project-root project)
-            default-directory))
-         (basename (file-name-nondirectory (directory-file-name
-                                            (file-local-name root-path)))))
-    basename))
+            default-directory)))
+    (file-name-nondirectory (directory-file-name (file-local-name root)))))
 
-(defun lordar-mode-line--project-relative-directory ()
+(defun lordar-mode-line--project-root-relative-directory ()
   "Return the directory path relative to the root of the project.
-If not in a project the relative path of `default-directory' is returned."
-  (let ((filename (buffer-file-name))
-        (project-root (file-local-name (if-let* ((project (project-current)))
-                                           (project-root project)
-                                         default-directory)) ))
-    (directory-file-name
-     (concat
-      (concat (file-name-nondirectory (directory-file-name project-root)) "/")
-      (when-let (relative-path
-                 (file-relative-name
-                  (or (and filename (file-name-directory filename)) "./")
-                  project-root))
-        (if (string= relative-path "./")
-            ""
-          relative-path))))))
+If not in a project the `default-directory' is returned.
+Examples:
+- With project at ~/.emacs.d the function returns .emacs.d/modules
+  if visiting ~/.emacs.d/modules/lang-elisp.el.
+- With no project the function returns ~/projects
+  if visiting ~/projects/emacs-never-dies.org"
+  (let* (directory)
+    (if-let* ((project (project-current))
+              (root (project-root project))
+              (root-parent (file-name-parent-directory root))
+              (relative-dir (file-relative-name default-directory
+                                                root-parent)))
+        (setq directory relative-dir)
+      (setq directory default-directory))
+    (directory-file-name (abbreviate-file-name
+                          (file-local-name directory)))))
 
 (provide 'lordar-mode-line-segments)
 
