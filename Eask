@@ -18,8 +18,8 @@
 (license "GPLv3")
 
 (package-file "lordar-mode-line.el")
-
-(script "test" "echo \"Error: no test specified\" && exit 1")
+(files "lordar-mode-line.el")
+(files "lordar-mode-line-*.el")
 
 ;; https://emacs-eask.github.io/DSL/#-source-alias
 (source "gnu")
@@ -31,7 +31,8 @@
 ;; https://emacs-eask.github.io/DSL/#-development-rest-body
 (development
  (depends-on "buttercup")
- (depends-on "elsa"))
+ (depends-on "package-lint")
+ (depends-on "relint"))
 
 ;; Tell checkdoc not to demand two spaces after a period.
 (setq sentence-end-double-space nil)

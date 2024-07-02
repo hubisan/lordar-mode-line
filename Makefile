@@ -3,47 +3,98 @@
 # Use this as base
 # https://github.com/emacs-lsp/lsp-mode/blob/master/Makefile
 
-.PHONY: help all test test-as-is lint compile clean run-emacs
+EMACS ?= emacs
+EASK ?= eask
 
-verbose ?= 
+.PHONY: help all package install compile test \
+        lint lint-package lint-checkdoc lint-indent lint-relint \
+        clean clean-elc clean-autoloads \
+        emacs 
 
 help:
 	$(info )
-	$(info - make            # Show this help)
-	$(info - make help       # Show this help)
-	$(info - make all        # Run tests, lint and compile)
-	$(info - make test       # Run tests)
-	$(info - make test-as-is # Run tests and use as-is instead of packaged)
-	$(info - make lint       # Run linters)
-	$(info - make compile    # Compiles the files to check for errors/warnings)
-	$(info - make clean      # Clean everything)
-	$(info - make run-emacs  # Run Emacs with package and dependencies installed)
+	$(info - make                 # Show this help)
+	$(info - make all             # Run package, install, compile, test and lint)
+	$(info - make package         # Build package artifact)
+	$(info - make install         # Install the package)
+	$(info - make compile         # Compiles the files to check for errors/warnings)
+	$(info - make test            # Run tests with buttercup)
+	$(info - make lint            # Clean autoloads and run linters)
+	$(info - make lint-package    # Clean autoloads and run package-lint)
+	$(info - make lint-checkdoc   # Clean autoloads and run checkdoc)
+	$(info - make lint-indent     # Clean autoloads and run indent-lint)
+	$(info - make lint-relint     # Clean autoloads and run relint)
+	$(info - make clean           # Clean everything)
+	$(info - make clean-elc       # Remove byte compiled files generated)
+	$(info - make clean-autoloads # Remove generated autoloads file)
+	$(info - make emacs           # Run Emacs with package and dependencies installed)
 	$(info )
 	@echo > /dev/null
 
-all: test compile lint
+all: clean package install compile test lint
 
-test:
-	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> TEST'
-	@eldev --packaged --debug $(verbose) --time test
+package:
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> PACKAGING'
+	@$(EASK) package
 
-test-as-is:
-	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> TEST'
-	@eldev --as-is --debug $(verbose) --time test
-
-lint:
-	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> LINT'
-	@eldev --debug $(verbose) --time lint
+install:
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> INSTALL'
+	@$(EASK) install
 
 compile:
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> COMPILE'
-	@eldev --debug $(verbose) --time compile --warnings-as-errors
-	@eldev clean .elc > /dev/null
+	@$(EASK) compile
+
+test:
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> TEST'
+	@$(EASK) test buttercup
+
+lint:
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> LINT'
+	@$(EASK) clean autoloads --verbose 0
+	@printf '\e[1;34m%-10s\e[0m\n\n' '>>> package-lint'
+	@$(EASK) lint package --verbose 0
+	@printf '\e[1;34m%-10s\e[0m\n\n' '>>> checkdoc'
+	@$(EASK) lint checkdoc --verbose 0
+	@printf '\e[1;34m%-10s\e[0m\n' '>>> indent-lint'
+	@$(EASK) lint indent --verbose 0
+	@printf '\e[1;34m%-10s\e[0m\n\n' '>>> relint'
+	@$(EASK) lint regexps --verbose 0
+
+lint-package:
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> LINT package-lint'
+	@$(EASK) clean autoloads
+	@$(EASK) lint package
+
+lint-checkdoc:
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> LINT checkdoc'
+	@$(EASK) clean autoloads
+	@$(EASK) lint checkdoc
+
+lint-indent:
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> LINT indent-lint'
+	@$(EASK) clean autoloads
+	@$(EASK) lint indent
+
+lint-relint:
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> LINT relint'
+	@$(EASK) clean autoloads
+	@$(EASK) lint regexps
 
 clean:
-	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> CLEAN'
-	@eldev clean
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> CLEAN ALL'
+	@$(EASK) clean all
 
-run-emacs:
+clean-elc:
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> CLEAN ELC'
+	@$(EASK) clean elc
+
+clean-autoloads:
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> CLEAN AUTOLOADS'
+	@$(EASK) clean autoloads
+
+emacs:
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> RUN EMACS'
-	@eldev emacs
+	@$(EASK) package
+	@$(EASK) install
+	@$(EASK) emacs &
