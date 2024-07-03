@@ -3,7 +3,7 @@
 
 ** Bugs, Improvements and new Features
 
-Go to issues page and make a new issue.
+Go to the issues page and create a new issue.
 
 Make sure to:
 
@@ -19,7 +19,7 @@ Remember to:
 - Include only one feature in a pull request.
 - Open an issue and mention your planned pull request.
 - Add/update tests if needed.
-- The tests must pass (see [[#testing][Testing]]).
+- Ensure the tests pass (see [[#testing][Testing]]).
 - Update [[./README.org][README.org]] if needed.
 - Update the documentation in the [[./README.org][README.org]] if needed.
 - Update [[./CHANGELOG.org][CHANGELOG.org]].
@@ -29,11 +29,11 @@ Remember to:
 :CUSTOM_ID: testing
 :END:
 
-Uses [[https://emacs-eask.github.io/Getting-Started/Introduction/][Eask]]  which needs to be [[https://emacs-eask.github.io/Getting-Started/Install-Eask/#-npm-cross-platform][installed]]. The tests are written with [[https://github.com/jorgenschaefer/emacs-buttercup][Buttercup]]. After pushing to GitHub an action is triggered which calls =make all=.
+Use [[https://emacs-eask.github.io/Getting-Started/Introduction/][Eask]], which needs to be [[https://emacs-eask.github.io/Getting-Started/Install-Eask/#-npm-cross-platform][installed]]. The tests are written with [[https://github.com/jorgenschaefer/emacs-buttercup][Buttercup]]. After pushing to GitHub, an action is triggered which calls =make all=.
 
 **** Testing locally
 
-To test the package locally call the Makefile targets or :
+To test the package locally, call the Makefile targets:
 
 | Target         | Description                                       |
 |----------------+---------------------------------------------------|
@@ -49,19 +49,20 @@ To test the package locally call the Makefile targets or :
 
 ***** Linters
 
-By default (=make lint=) the following linters are used: package-lint, checkdoc, indent-lint, relint. If you want to use another linter or call a linter separately use =eask lint=.
+When using =make lint=, the following linters are used: package-lint, checkdoc, indent-lint, relint. If you want to use another linter or call a linter separately, use =eask lint=.
 
 ***** Run Specific Emacs Version in Docker Container
 
-It is possible to run an Eask command with specific Emacs version in a docker container:
+It is possible to run an Eask command with specific Emacs version in a Docker container (Docker needs to be installed and configured to run without sudo):
 
 #+BEGIN_SRC shell
   # Run the test with Emacs version 29.4
   eask docker 29.4 test buttercup
 #+END_SRC
 
-- Unfortunately I have not found a way to run the make targets (tried =eask docker 29.4 exec make test=). 
-- =eask docker 29.4 emacs= doesn't seem to work. I was able to launch an Emacs with the following command:
+- Unfortunately, I have not found a way to run the make targets (tried =eask docker 29.4 exec make test=). 
+
+- =eask docker 29.4 emacs= doesn't seem to work. I was able to launch an Emacs with the following command. The volumne has to be changed depending on where your have cloned the repository to:
 
   #+BEGIN_SRC shell
     docker run --interactive --tty \

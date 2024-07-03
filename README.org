@@ -80,4 +80,4 @@ See the [[./CHANGELOG.org][changelog]].
 
 Use the issue tracker to reports bugs, suggest improvements or propose new features. If you want to contribute please open a pull request after having opened a new issue.
 
-In any case please check out the [[./CONTRIBUTING.org::*Contributing][contributing guidelines]] beforehand.
+In any case please check out the [[./CONTRIBUTING.org][contributing guidelines]] beforehand.
