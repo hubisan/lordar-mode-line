@@ -4,9 +4,6 @@
   (defvar sentence-end-double-space)
   (defvar checkdoc-verb-check-experimental-flag))
 
-;; Can run Emacs with the packages installed:
-;; emacs --maximized --init-directory '/home/hubisan/projects/coding/lordar-mode-line/.eask/30.0.50'
-
 ;; Domain Specific Language
 ;; https://emacs-eask.github.io/DSL/
 (package "lordar-mode-line"
@@ -18,11 +15,11 @@
 (license "GPLv3")
 
 (package-file "lordar-mode-line.el")
-(files "lordar-mode-line.el")
 (files "lordar-mode-line-*.el")
 
 ;; https://emacs-eask.github.io/DSL/#-source-alias
 (source "gnu")
+(source "nongnu")
 (source "melpa")
 
 ;; https://emacs-eask.github.io/DSL/#-depends-on-package-name-rest-recipe
