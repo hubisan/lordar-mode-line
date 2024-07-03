@@ -1,4 +1,3 @@
-#+TITLE: Custom Segments
 #+STARTUP: showall
 
 * Custom Segments
