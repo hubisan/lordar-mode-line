@@ -1,4 +1,4 @@
-#+STARTUP: content
+#+STARTUP: showall
 
 * Lordar-mode-line                                               :Noexport_2:
 
@@ -9,8 +9,12 @@ A minimal mode-line for Emacs.
 ** Main features                                                :noexport_0:
 
 - =Lordar-mode-line= includes only a few built-in segments.
-- You can add your own segments (see the documentation for instructions). Custom segments can also be added to this documentation through a pull request.
-- By default, some major-mode-specific mode-line formats are defined and set up using major-mode hooks. You can customize these or add your own.
+
+- You can add your own segments, see the documentation for [[#custom-segments][instructions]].
+
+- To share a segment, make a pull request and add it to [[file:custom-segments/custom-segments.org][custom-segments.org]]. I don't plan to add more segments to the code base to keep it small.
+
+- By default, some major-mode-specific mode-line formats are defined and set up using major-mode hooks. You can disable/customize these or add your own.
 
 -----
 

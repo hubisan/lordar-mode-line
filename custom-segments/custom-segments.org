@@ -1,0 +1,10 @@
+#+TITLE: Custom Segments
+#+STARTUP: showall
+
+* Custom Segments
+
+This is a collection of custom segments from users that can be added to Lordar-mode-line. To share a segment, make a pull request and add it to this file.
+
+I don't plan to add more segments to the code base to keep it small.
+
+
