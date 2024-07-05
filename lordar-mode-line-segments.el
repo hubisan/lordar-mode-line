@@ -56,7 +56,7 @@ the `symbols' suffix. So `buffer-status' for instance gets turned into
          (symbols-alist (symbol-value (intern-soft symbols-string))))
     (if symbols-alist
         (or (alist-get key symbols-alist)
-          (user-error "Symbol %s doesn't exist in %s" key symbols-string))
+            (user-error "Symbol %s doesn't exist in %s" key symbols-string))
       (user-error "Symbols alist %s doesn't exist" symbols-string))))
 
 ;;;; Adjust Height
@@ -168,16 +168,16 @@ Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
                                                            'buffer-status)
                     'face (lordar-mode-line-segments--get-face
                            'buffer-read-only-status)))
-      ((buffer-modified-p)
-       (propertize (lordar-mode-line-segments--get-symbol 'buffer-modified
-                                                          'buffer-status)
-            'face (lordar-mode-line-segments--get-face
-                   'buffer-modified-status)))
-      (t
-       (propertize (lordar-mode-line-segments--get-symbol 'buffer-not-modified
-                                                          'buffer-status)
-                   'face (lordar-mode-line-segments--get-face
-                          'buffer-status))))))
+       ((buffer-modified-p)
+        (propertize (lordar-mode-line-segments--get-symbol 'buffer-modified
+                                                           'buffer-status)
+                    'face (lordar-mode-line-segments--get-face
+                           'buffer-modified-status)))
+       (t
+        (propertize (lordar-mode-line-segments--get-symbol 'buffer-not-modified
+                                                           'buffer-status)
+                    'face (lordar-mode-line-segments--get-face
+                           'buffer-status))))))
 
 ;;;; Version Control State
 
