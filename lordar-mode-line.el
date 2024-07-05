@@ -153,33 +153,6 @@ line."
   "Return format string from `lordar-mode-line-symbols' for SYMBOL."
   (alist-get symbol lordar-mode-line-symbols))
 
-;;;; Detect Active Window
-
-;; Detect the active window to apply inactive face for inactive windows.
-
-(defvar lordar-mode-line--current-window nil
-  "Store the current window.")
-
-(defun lordar-mode-line--selected-window ()
-  "Get the selected window."
-  (frame-selected-window))
-
-(defun lordar-mode-line--update-selected-window (&rest _)
-  "Update the selected window stored in `lordar-mode-line--current-window'.
-If the minibuffer is active return the last selected window."
-  (let ((win (lordar-mode-line--selected-window)))
-    (setq lordar-mode-line--current-window
-          (if (minibuffer-window-active-p win)
-              (minibuffer-selected-window)
-            win))))
-
-;; TODO Emacs 29 has a new function for this!!!!
-;; `mode-line-window-selected-p'
-(defun lordar-mode-line--window-active-p ()
-  "Check if the window is active."
-  (when lordar-mode-line--current-window
-    (eq (lordar-mode-line--selected-window) lordar-mode-line--current-window)))
-
 ;;;; Minor-mode
 
 ;;;###autoload
@@ -194,12 +167,8 @@ If the minibuffer is active return the last selected window."
 
 (defun lordar-mode-line--activate ()
   "Activate the lordar-mode-line."
-  ;; Not needed with Emacs 29 as there is `mode-line-window-selected-p'.
-  ;; (lordar-mode-line--update-selected-window)
-  ;; (add-hook 'window-selection-change-functions
-  ;;           #'lordar-mode-line--update-selected-window)
   (setq-default mode-line-format
-                '(:eval (buffer-name)))
+                '(:eval (lordar-mode-line-segments--buffer-name)))
   ;; Do list the buffers
   ;; Apply the mode line depending on the major mode
   ;; Need a list for this and the function
@@ -219,8 +188,6 @@ If the minibuffer is active return the last selected window."
 
 (defun lordar-mode-line--deactivate ()
   "Deactivate the lordar-mode-line."
-  (remove-hook 'window-selection-change-functions
-               #'lordar-mode-line--update-selected-window)
   ;; Restore the old mode-line-format.
   (let* ((original-value (eval (car (get 'mode-line-format 'standard-value)))))
     (setq-default mode-line-format original-value)
