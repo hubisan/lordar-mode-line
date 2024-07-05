@@ -173,6 +173,8 @@ If the minibuffer is active return the last selected window."
               (minibuffer-selected-window)
             win))))
 
+;; TODO Emacs 29 has a new function for this!!!!
+;; `mode-line-window-selected-p'
 (defun lordar-mode-line--window-active-p ()
   "Check if the window is active."
   (when lordar-mode-line--current-window
@@ -183,7 +185,7 @@ If the minibuffer is active return the last selected window."
 ;;;###autoload
 (define-minor-mode lordar-mode-line-mode
   "Toggle lordar-mode-line."
-  :group 'mood-line
+  :group 'lordar-mode-line
   :global t
   :lighter nil
   (if lordar-mode-line-mode
@@ -192,9 +194,28 @@ If the minibuffer is active return the last selected window."
 
 (defun lordar-mode-line--activate ()
   "Activate the lordar-mode-line."
-  (lordar-mode-line--update-selected-window)
-  (add-hook 'window-selection-change-functions
-            #'lordar-mode-line--update-selected-window))
+  ;; Not needed with Emacs 29 as there is `mode-line-window-selected-p'.
+  ;; (lordar-mode-line--update-selected-window)
+  ;; (add-hook 'window-selection-change-functions
+  ;;           #'lordar-mode-line--update-selected-window)
+  (setq-default mode-line-format
+                '(:eval (buffer-name)))
+  ;; Do list the buffers
+  ;; Apply the mode line depending on the major mode
+  ;; Need a list for this and the function
+  ;; apply-mode-line-based-on-major-mode
+  )
+
+
+;; I need a list of modes to apply specific mode-lines
+;; (defun apply-mode-line-based-on-major-mode ()
+;;   "Apply custom mode line based on the current major mode."
+;;   (cond
+;;    ((derived-mode-p 'prog-mode) (my-mode-line-setup))
+;;    ((derived-mode-p 'text-mode) (my-mode-line-setup))
+;;    ((derived-mode-p 'text-mode) (my-mode-line-setup))
+;;    ;; Add other major modes and their corresponding mode line setups here
+;;    (t (my-mode-line-setup))))
 
 (defun lordar-mode-line--deactivate ()
   "Deactivate the lordar-mode-line."

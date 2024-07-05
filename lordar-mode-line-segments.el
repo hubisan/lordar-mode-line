@@ -28,6 +28,18 @@
 (require 'project)
 (require 'vc)
 
+;;;; Major Mode
+
+(defun lordar-mode-line-segments--major-mode ()
+  "Name of the major mode"
+  (format-mode-line mode-name 'lordar-mode-line-major-mode))
+
+;;;; Buffer Name
+
+(defun lordar-mode-line-segments--buffer-name ()
+  "Return the name of the current buffer."
+  (format-mode-line "%b" 'lordar-mode-line-buffer-name))
+
 ;;;; Version Control State
 
 (defvar-local lordar-mode-line-segments--vc-text nil
@@ -80,6 +92,16 @@ If `vc-display-status' is nil, return the name of BACKEND."
 ;;                       0 5 (face mood-line-status-neutral))
 ;;                     (mood-line--get-glyph :vc-good)
 ;;                     rev))))))
+
+;;;; Input Method
+
+
+
+;;;; Info-mode Breadcrumbs
+
+;; (Info-breadcrumbs)
+;; Or check doom modeline
+;; Or
 
 ;;;; Project Directory
 
