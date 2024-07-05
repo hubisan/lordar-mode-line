@@ -25,20 +25,159 @@
 
 ;;;; Requirements
 
-(require 'project)
-(require 'vc)
+(eval-when-compile
+  (require 'project)
+  (require 'vc))
+
+;;;; Helpers
+
+(defun lordar-mode-line-segments--get-face (face)
+  "Return the appropriate face for the symbol FACE.
+If the selected window is active, return face with `lordar-mode-line-' as
+prefix. If inactive, return the corresponding FACE with an additional
+`-inactive' suffix."
+  (let* ((face (format "lordar-mode-line-%s" (symbol-name face)))
+         (active-face (intern-soft face)))
+    (if (mode-line-window-selected-p)
+        (or active-face
+            (user-error "Face %s doesn't exist" face))
+      (let* ((inactive-face-string (format "%s-inactive" face))
+             (inactive-face (intern-soft inactive-face-string)))
+        (or inactive-face
+            (user-error "Face %s doesn't exist" inactive-face-string))))))
+
+(defun lordar-mode-line-segments--get-symbol (key symbols)
+  "Return the symbol associated with KEY from SYMBOLS alist.
+SYMBOLS is the symbol without the prefix `lordar-mode-line' and without
+the `symbols' suffix. So `buffer-status' for instance gets turned into
+`lordar-mode-line-buffer-status-symbols'."
+  (let* ((symbols-string (format "lordar-mode-line-%s-symbols"
+                                 (symbol-name symbols)))
+         (symbols-alist (symbol-value (intern-soft symbols-string))))
+    (if symbols-alist
+        (or (alist-get key symbols-alist)
+          (user-error "Symbol %s doesn't exist in %s" key symbols-string))
+      (user-error "Symbols alist %s doesn't exist" symbols-string))))
+
+;;;; Adjust Height
+
+(defcustom lordar-mode-line-height-adjust-factor 0.2
+  "Factor to adjust the height of the mode line by.
+The factor must be a number, which is interpreted as a multiple of the height
+of the affected text."
+  :group 'lordar-mode-line
+  :type 'number)
+
+(defface lordar-mode-line-height-adjust
+  '((t (:foreground unspecified :background unspecified)))
+  "Face for invisible elements that adjust the mode-line height."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-adjust-height ()
+  "Adjust the mode-line height using invisible spaces."
+  (let* ((factor lordar-mode-line-height-adjust-factor)
+         (top (propertize " " 'display `((space-width 0.01) (raise ,factor))))
+         (bottom (propertize " " 'display
+                             `((space-width 0.01) (raise ,(* -1 factor))))))
+    (propertize (concat top bottom) 'face 'lordar-mode-line-height-adjust)))
 
 ;;;; Major Mode
 
-(defun lordar-mode-line-segments--major-mode ()
-  "Name of the major mode"
-  (format-mode-line mode-name 'lordar-mode-line-major-mode))
+(defface lordar-mode-line-major-mode
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying the major mode in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-major-mode-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the major mode in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-major-mode ()
+  "Pretty name of current buffer's major mode."
+  (propertize mode-name
+              'face (lordar-mode-line-segments--get-face 'major-mode)))
 
 ;;;; Buffer Name
 
-(defun lordar-mode-line-segments--buffer-name ()
+(defface lordar-mode-line-buffer-name
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying the value of `buffer-name'."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-buffer-name-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the value of `buffer-name' when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-buffer-name ()
   "Return the name of the current buffer."
-  (format-mode-line "%b" 'lordar-mode-line-buffer-name))
+  (format-mode-line "%b" (lordar-mode-line-segments--get-face 'buffer-name)))
+
+;;;; Buffer Status
+
+(defcustom lordar-mode-line-buffer-status-symbols
+  '((buffer-not-modified . " ")
+    (buffer-modified . "*")
+    ;; %% to get a %.
+    (buffer-read-only . "%%"))
+  "Symbols for buffer status in the mode line.
+Each entry is a cons cell with a keyword and a corresponding format string."
+  :group 'lordar-mode-line
+  :type '(alist :tag "Character"
+                :key-type (symbol :tag "Symbol name")
+                :value-type (character :tag "Character to use")))
+
+(defface lordar-mode-line-buffer-status
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying buffer status in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-buffer-status-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying buffer status in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-buffer-modified-status
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying modified status in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-buffer-modified-status-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying modified status in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-buffer-read-only-status
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying read-only status in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-buffer-read-only-status-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying read-only status in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-buffer-status ()
+  "Return an indicator representing the status of the current buffer.
+Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
+  (if (buffer-file-name (buffer-base-buffer))
+      (cond
+       (buffer-read-only
+        (propertize (lordar-mode-line-segments--get-symbol 'buffer-read-only
+                                                           'buffer-status)
+                    'face (lordar-mode-line-segments--get-face
+                           'buffer-read-only-status)))
+      ((buffer-modified-p)
+       (propertize (lordar-mode-line-segments--get-symbol 'buffer-modified
+                                                          'buffer-status)
+            'face (lordar-mode-line-segments--get-face
+                   'buffer-modified-status)))
+      (t
+       (propertize (lordar-mode-line-segments--get-symbol 'buffer-not-modified
+                                                          'buffer-status)
+                   'face (lordar-mode-line-segments--get-face
+                          'buffer-status))))))
 
 ;;;; Version Control State
 
@@ -95,6 +234,8 @@ If `vc-display-status' is nil, return the name of BACKEND."
 
 ;;;; Input Method
 
+;;;; Syntax-Checking
+
 
 
 ;;;; Info-mode Breadcrumbs
@@ -105,7 +246,7 @@ If `vc-display-status' is nil, return the name of BACKEND."
 
 ;;;; Project Directory
 
-(defun lordar-mode-line-segments--project-root-basename ()
+(defun lordar-mode-line-segments-project-root-basename ()
   "Return the project root basename.
 If not in a project the basename of `default-directory' is returned."
   (let* ((root
@@ -114,7 +255,7 @@ If not in a project the basename of `default-directory' is returned."
             default-directory)))
     (file-name-nondirectory (directory-file-name (file-local-name root)))))
 
-(defun lordar-mode-line-segments--project-root-relative-directory ()
+(defun lordar-mode-line-segments-project-root-relative-directory ()
   "Return the directory path relative to the root of the project.
 If not in a project the `default-directory' is returned.
 Examples:

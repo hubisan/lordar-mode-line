@@ -46,7 +46,7 @@
   "A minimal mode line configuration."
   :group 'lordar-mode-line)
 
-(defcustom lordar-mode-line-symbols
+(defcustom lordar-mode-line-checker-symbols
   '(;; Checker format string will be called with number of errors.
     (:checker-info . "i%s")
     (:checker-issues . "e%s")
@@ -90,68 +90,9 @@ line."
   "Default face used if the mode-line is inactive."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-faded
-  '((t (:inherit shadow :weight normal)))
-  "Face used for less important mode line elements."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-buffer-name
-  '((t (:inherit mode-line-active)))
-  "Face used for displaying the value of `buffer-name'."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-buffer-modified
-  '((t (:inherit error :weight normal)))
-  "Face used for the ':buffer-modified' buffer status indicator."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-buffer-read-only
-  '((t (:inherit default)))
-  "Face used for the ':buffer-read-only' buffer status indicator."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-buffer-narrowed
-  '((t (:inherit default)))
-  "Face used for the ':buffer-narrowed' buffer status indicator."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-major-mode
-  '((t (:inherit default)))
-  "Face used for the major mode indicator."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-status-neutral
-  '((t (:inherit default)))
-  "Face used for neutral or inactive status indicators."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-status-info
-  '((t (:inherit font-lock-keyword-face :weight normal)))
-  "Face used for generic status indicators."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-success
-  '((t (:inherit success :weight normal)))
-  "Face used for success status indicators."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-warning
-  '((t (:inherit warning :weight normal)))
-  "Face for warning status indicators."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-error
-  '((t (:inherit error :weight normal)))
-  "Face for error status indicators."
-  :group 'lordar-mode-line-faces)
-
 ;;;; Variables
 
 ;;;; Helper Functions
-
-(defun lordar-mode-line--get-symbol (symbol)
-  "Return format string from `lordar-mode-line-symbols' for SYMBOL."
-  (alist-get symbol lordar-mode-line-symbols))
 
 ;;;; Minor-mode
 
@@ -168,7 +109,11 @@ line."
 (defun lordar-mode-line--activate ()
   "Activate the lordar-mode-line."
   (setq-default mode-line-format
-                '(:eval (lordar-mode-line-segments--buffer-name)))
+                '(:eval (concat (lordar-mode-line-segments-adjust-height)
+                                " "
+                                (lordar-mode-line-segments-buffer-status)
+                                " "
+                                (lordar-mode-line-segments-buffer-name))))
   ;; Do list the buffers
   ;; Apply the mode line depending on the major mode
   ;; Need a list for this and the function
