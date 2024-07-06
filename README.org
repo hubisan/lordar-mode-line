@@ -4,7 +4,7 @@
 
 [[https://www.gnu.org/licenses/gpl-3.0][https://img.shields.io/badge/License-GPL%20v3-blue.svg]] [[https://github.com/hubisan/lordar-mode-line/actions/workflows/tests.yml][https://github.com/hubisan/lordar-mode-line/actions/workflows/tests.yml/badge.svg]]
 
-A minimal mode-line for Emacs.
+A minimal mode line for Emacs. Requires Emacs 30.
 
 ** Main features                                                :noexport_0:
 
@@ -52,9 +52,8 @@ A minimal mode-line for Emacs.
 
 Set the following variables to change the behaviour of the package:
 
-| Variable | Default | Description |
-|----------+---------+-------------|
-|          |         |             |
+- ~mode-line-right-align-edge~ (window)
+  You might have to modify the built-in variable ~mode-line-right-align-edge~ to make the alignment to right of the second part of the mode line work.
 
 *** Faces
 

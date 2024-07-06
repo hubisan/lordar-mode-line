@@ -4,6 +4,8 @@
 
 ;; This file is not part of GNU Emacs
 
+;;; License:
+
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
@@ -27,7 +29,17 @@
 
 (eval-when-compile
   (require 'project)
-  (require 'vc))
+  (require 'vc)
+  (require 'pcase))
+
+(eval-when-compile
+  (defvar evil-mode-line-tag)
+  (defvar winum-auto-setup-mode-line))
+
+(eval-when-compile
+  (declare-function winum-get-number-string "ext:winum"))
+
+;;;;
 
 ;;;; Helpers
 
@@ -59,6 +71,12 @@ the `symbols' suffix. So `buffer-status' for instance gets turned into
             (user-error "Symbol %s doesn't exist in %s" key symbols-string))
       (user-error "Symbols alist %s doesn't exist" symbols-string))))
 
+(defun lordar-mode-line-segments-propertize (text face)
+  "Propertize TEXT with the FACE.
+If the selected window is active, set face with `lordar-mode-line-' as prefix.
+If inactive, set the corresponding FACE with an additional `-inactive' suffix."
+  (propertize text 'face (lordar-mode-line-segments--get-face face)))
+
 ;;;; Adjust Height
 
 (defcustom lordar-mode-line-height-adjust-factor 0.2
@@ -73,13 +91,33 @@ of the affected text."
   "Face for invisible elements that adjust the mode-line height."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-adjust-height ()
-  "Adjust the mode-line height using invisible spaces."
-  (let* ((factor lordar-mode-line-height-adjust-factor)
+(defun lordar-mode-line-segments-adjust-height (&optional factor)
+  "Adjust the mode-line height by FACTORE using invisible spaces.
+If FACTOR is not give use `lordar-mode-line-height-adjust'."
+  (let* ((factor (or factor lordar-mode-line-height-adjust-factor))
          (top (propertize " " 'display `((space-width 0.01) (raise ,factor))))
          (bottom (propertize " " 'display
                              `((space-width 0.01) (raise ,(* -1 factor))))))
     (propertize (concat top bottom) 'face 'lordar-mode-line-height-adjust)))
+
+;;;; Vertical Space
+
+(defface lordar-mode-line-vertical-space
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying the major mode in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-vertical-space-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the major mode in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-vertical-space (&optional width)
+  "Vertical space with space-width set to WIDTH.
+If WIDTH is nil set it to 1."
+  (let* ((width (or width 1.0)))
+    (propertize " " 'display `((space-width ,width))
+                'face (lordar-mode-line-segments--get-face 'vertical-space))))
 
 ;;;; Major Mode
 
@@ -95,8 +133,7 @@ of the affected text."
 
 (defun lordar-mode-line-segments-major-mode ()
   "Pretty name of current buffer's major mode."
-  (propertize mode-name
-              'face (lordar-mode-line-segments--get-face 'major-mode)))
+  (lordar-mode-line-segments-propertize mode-name 'major-mode))
 
 ;;;; Buffer Name
 
@@ -117,10 +154,10 @@ of the affected text."
 ;;;; Buffer Status
 
 (defcustom lordar-mode-line-buffer-status-symbols
-  '((buffer-not-modified . " ")
-    (buffer-modified . "*")
-    ;; %% to get a %.
-    (buffer-read-only . "%%"))
+  '((buffer-not-modified . "")
+    (buffer-modified . "* ")
+    ;; %% is needed to print %.
+    (buffer-read-only . "%% "))
   "Symbols for buffer status in the mode line.
 Each entry is a cons cell with a keyword and a corresponding format string."
   :group 'lordar-mode-line
@@ -138,22 +175,22 @@ Each entry is a cons cell with a keyword and a corresponding format string."
   "Face used for displaying buffer status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-buffer-modified-status
+(defface lordar-mode-line-buffer-status-modified
   '((t (:inherit lordar-mode-line-active)))
   "Face used for displaying modified status in the mode line."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-buffer-modified-status-inactive
-  '((t (:inherit lordar-mode-line-inactive)))
+(defface lordar-mode-line-buffer-status-modified-inactive
+  '((t (:inherit lordar-mode-line-active)))
   "Face used for displaying modified status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-buffer-read-only-status
-  '((t (:inherit lordar-mode-line-active)))
+(defface lordar-mode-line-buffer-status-read-only
+  '((t (:inherit lordar-mode-line-warning)))
   "Face used for displaying read-only status in the mode line."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-buffer-read-only-status-inactive
+(defface lordar-mode-line-buffer-status-read-only-inactive
   '((t (:inherit lordar-mode-line-inactive)))
   "Face used for displaying read-only status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
@@ -161,41 +198,78 @@ Each entry is a cons cell with a keyword and a corresponding format string."
 (defun lordar-mode-line-segments-buffer-status ()
   "Return an indicator representing the status of the current buffer.
 Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
-  (if (buffer-file-name (buffer-base-buffer))
-      (cond
-       (buffer-read-only
-        (propertize (lordar-mode-line-segments--get-symbol 'buffer-read-only
-                                                           'buffer-status)
-                    'face (lordar-mode-line-segments--get-face
-                           'buffer-read-only-status)))
-       ((buffer-modified-p)
-        (propertize (lordar-mode-line-segments--get-symbol 'buffer-modified
-                                                           'buffer-status)
-                    'face (lordar-mode-line-segments--get-face
-                           'buffer-modified-status)))
-       (t
-        (propertize (lordar-mode-line-segments--get-symbol 'buffer-not-modified
-                                                           'buffer-status)
-                    'face (lordar-mode-line-segments--get-face
-                           'buffer-status))))))
+  (when (buffer-file-name (buffer-base-buffer))
+    (let* ((symbol-and-face
+            (cond
+             (buffer-read-only '(buffer-read-only buffer-status-read-only))
+             ((buffer-modified-p) '(buffer-modified buffer-status-modified))
+             (t '(buffer-not-modified buffer-status))))
+           (symbol (lordar-mode-line-segments--get-symbol
+                    (car symbol-and-face) 'buffer-status))
+           (face (lordar-mode-line-segments--get-face (cadr symbol-and-face))))
+      (propertize symbol 'face face))))
+
+;;;; Project Directory
+
+(defface lordar-mode-line-project-directory
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying buffer status in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-project-directory-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying buffer status in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-project-root-basename ()
+  "Return the project root basename.
+If not in a project the basename of `default-directory' is returned."
+  (let* ((root
+          (if-let* ((project (project-current)))
+              (project-root project)
+            default-directory)))
+    (lordar-mode-line-segments-propertize
+     (file-name-nondirectory (directory-file-name (file-local-name root)))
+     'project-directory)))
+
+(defun lordar-mode-line-segments-project-root-relative-directory ()
+  "Return the directory path relative to the root of the project.
+If not in a project the `default-directory' is returned.
+Examples:
+- With project at ~/.emacs.test the function returns .emacs.test/modules
+  if visiting ~/.emacs.test/modules/lang-elisp.el.
+- With no project the function returns ~/projects
+  if visiting ~/projects/emacs-never-dies.org"
+  (let* (directory)
+    (if-let* ((project (project-current))
+              (root (project-root project))
+              (root-parent (file-name-parent-directory root))
+              (relative-dir (file-relative-name default-directory
+                                                root-parent)))
+        (setq directory relative-dir)
+      (setq directory default-directory))
+    (lordar-mode-line-segments-propertize
+     (directory-file-name (abbreviate-file-name
+                           (file-local-name directory)))
+     'project-directory)))
 
 ;;;; Version Control State
 
 (defvar-local lordar-mode-line-segments--vc-text nil
   "Mode line segment string indicating the current state of `vc-mode'.")
 
-(defun lordar-mode-line-segments--vc-get-branch (vc-mode-str backend)
-  "Return name of current file's branch for BACKEND according to `vc-mode'.
-VC-MODE-STR is expected to be the value of `vc-mode' in the current buffer.
-If `vc-display-status' is nil, return the name of BACKEND."
-  (or (unless vc-display-status
-        (symbol-name backend))
-      (pcase backend
-        ('Git (substring-no-properties vc-mode-str 5))
-        ('Hg (substring-no-properties vc-mode-str 4)))
-      (ignore-errors
-        (substring (vc-working-revision buffer-file-name backend) 0 7))
-      "???"))
+;; (defun lordar-mode-line-segments--vc-get-branch (vc-mode-str backend)
+;;   "Return name of current file's branch for BACKEND according to `vc-mode'.
+;; VC-MODE-STR is expected to be the value of `vc-mode' in the current buffer.
+;; If `vc-display-status' is nil, return the name of BACKEND."
+;;   (or (unless vc-display-status
+;;         (symbol-name backend))
+;;       (pcase backend
+;;         ('Git (substring-no-properties vc-mode-str 5))
+;;         ('Hg (substring-no-properties vc-mode-str 4)))
+;;       (ignore-errors
+;;         (substring (vc-working-revision buffer-file-name backend) 0 7))
+;;       "???"))
 
 ;; TODO
 ;; (defun lordar-mode-line--vc-update (&rest _args)
@@ -236,43 +310,44 @@ If `vc-display-status' is nil, return the name of BACKEND."
 
 ;;;; Syntax-Checking
 
+;;;; Evil State
 
+(defface lordar-mode-line-evil-state
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying buffer status in the mode line."
+  :group 'lordar-mode-line-faces)
 
-;;;; Info-mode Breadcrumbs
+(defface lordar-mode-line-evil-state-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying buffer status in the mode line."
+  :group 'lordar-mode-line-faces)
 
-;; (Info-breadcrumbs)
-;; Or check doom modeline
-;; Or
+(defun lordar-mode-line-segments-evil-state ()
+  "Return the value of `evil-mode-line-tag`."
+  (lordar-mode-line-segments-propertize (eval evil-mode-line-tag) 'evil-state))
 
-;;;; Project Directory
+;;;; Winum (Window Number)
 
-(defun lordar-mode-line-segments-project-root-basename ()
-  "Return the project root basename.
-If not in a project the basename of `default-directory' is returned."
-  (let* ((root
-          (if-let* ((project (project-current)))
-              (project-root project)
-            default-directory)))
-    (file-name-nondirectory (directory-file-name (file-local-name root)))))
+(defface lordar-mode-line-winum
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying `winum' number in the mode line."
+  :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-project-root-relative-directory ()
-  "Return the directory path relative to the root of the project.
-If not in a project the `default-directory' is returned.
-Examples:
-- With project at ~/.emacs.test the function returns .emacs.test/modules
-  if visiting ~/.emacs.test/modules/lang-elisp.el.
-- With no project the function returns ~/projects
-  if visiting ~/projects/emacs-never-dies.org"
-  (let* (directory)
-    (if-let* ((project (project-current))
-              (root (project-root project))
-              (root-parent (file-name-parent-directory root))
-              (relative-dir (file-relative-name default-directory
-                                                root-parent)))
-        (setq directory relative-dir)
-      (setq directory default-directory))
-    (directory-file-name (abbreviate-file-name
-                          (file-local-name directory)))))
+(defface lordar-mode-line-winum-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying `winum' number in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-winum (&optional padding)
+  "Return the winum number string for the mode line, with optional PADDING.
+If PADDING is provided, it will be added before and after the winum number.
+This function also ensures `winum-auto-setup-mode-line' is disabled."
+  (setq winum-auto-setup-mode-line nil)
+  (let* ((nr (winum-get-number-string))
+         (text (if padding
+                   (format "%s%s%s" padding nr padding)
+                 nr)))
+    (lordar-mode-line-segments-propertize text 'winum)))
 
 (provide 'lordar-mode-line-segments)
 

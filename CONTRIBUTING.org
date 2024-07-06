@@ -44,6 +44,7 @@ To see all make targets run ~make~.
 When using ~make lint~, the following linters are used:
 
 - package-lint
+- elint
 - checkdoc
 - indent-lint 
 - relint

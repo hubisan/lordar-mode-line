@@ -24,23 +24,23 @@ all: clean package install compile test lint
 
 clean:
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> CLEAN ALL'
-	$(EASK) clean all
+	@$(EASK) clean all
 
 package:
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> PACKAGING'
-	$(EASK) package
+	@$(EASK) package
 
 install:
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> INSTALL'
-	$(EASK) install
+	@$(EASK) install
 
 compile:
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> COMPILE'
-	$(EASK) recompile
+	@$(EASK) recompile
 
 test:
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> TEST'
-	$(EASK) test buttercup
+	@$(EASK) test buttercup
 
 test-local: compile test lint
 
@@ -48,13 +48,15 @@ lint:
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> LINT'
 	@$(EASK) clean autoloads --verbose 0
 	@printf '\e[1;34m%-10s\e[0m\n\n' '>>> package-lint'
-	$(EASK) lint package --verbose 0
+	@$(EASK) lint package --verbose 0
+	@printf '\e[1;34m%-10s\e[0m\n\n' '>>> elint'
+	@$(EASK) lint elint --verbose 0
 	@printf '\e[1;34m%-10s\e[0m\n\n' '>>> checkdoc'
-	$(EASK) lint checkdoc --verbose 0
-	@printf '\e[1;34m%-10s\e[0m\n\n' '>>> indent-lint'
-	$(EASK) lint indent --verbose 0
+	@$(EASK) lint checkdoc --verbose 0
+	@printf '\e[1;34m%-10s\e[0m\n' '>>> indent-lint'
+	@$(EASK) lint indent --verbose 0
 	@printf '\e[1;34m%-10s\e[0m\n\n' '>>> relint'
-	$(EASK) lint regexps --verbose 0
+	@$(EASK) lint regexps --verbose 0
 
 docker-test:
 ifndef emacs
@@ -67,6 +69,7 @@ endif
 	$(EASK) docker $(emacs) clean autoloads
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> LINT'
 	$(EASK) docker $(emacs) lint package --verbose 0
+	$(EASK) docker $(emacs) lint elint --verbose 0
 	$(EASK) docker $(emacs) lint checkdoc --verbose 0
 	$(EASK) docker $(emacs) lint indent --verbose 0
 	$(EASK) docker $(emacs) lint regexps --verbose 0

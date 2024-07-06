@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Hubmann <hubisan@gmail.com>
 ;; URL: https://github.com/hubisan/lordar-mode-line
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.4"))
+;; Package-Requires: ((emacs "30.0.50"))
 ;; Keywords: mode-line faces
 
 ;; This file is not part of GNU Emacs
@@ -90,6 +90,16 @@ line."
   "Default face used if the mode-line is inactive."
   :group 'lordar-mode-line-faces)
 
+(defface lordar-mode-line-warning
+  '((t (:inherit warning)))
+  "Default face used if the mode-line is active."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-error
+  '((t (:inherit error)))
+  "Default face used if the mode-line is inactive."
+  :group 'lordar-mode-line-faces)
+
 ;;;; Variables
 
 ;;;; Helper Functions
@@ -108,18 +118,29 @@ line."
 
 (defun lordar-mode-line--activate ()
   "Activate the lordar-mode-line."
-  (setq-default mode-line-format
-                '(:eval (concat (lordar-mode-line-segments-adjust-height)
-                                " "
-                                (lordar-mode-line-segments-buffer-status)
-                                " "
-                                (lordar-mode-line-segments-buffer-name))))
+  (setq mode-line-format
+        '((:eval
+           (concat
+            (lordar-mode-line-segments-adjust-height)
+            (lordar-mode-line-segments-winum
+             (lordar-mode-line-segments-vertical-space))
+            (lordar-mode-line-segments-vertical-space)
+            (lordar-mode-line-segments-evil-state)
+            (lordar-mode-line-segments-vertical-space)
+            (lordar-mode-line-segments-buffer-status)
+            (lordar-mode-line-segments-buffer-name)
+            (lordar-mode-line-segments-vertical-space 1.5)
+            (lordar-mode-line-segments-project-root-relative-directory)))
+          mode-line-format-right-align
+          (:eval
+           (concat
+            (lordar-mode-line-segments-major-mode)
+            (lordar-mode-line-segments-vertical-space)))))
   ;; Do list the buffers
   ;; Apply the mode line depending on the major mode
   ;; Need a list for this and the function
   ;; apply-mode-line-based-on-major-mode
   )
-
 
 ;; I need a list of modes to apply specific mode-lines
 ;; (defun apply-mode-line-based-on-major-mode ()
