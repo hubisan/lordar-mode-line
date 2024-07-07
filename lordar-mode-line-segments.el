@@ -29,12 +29,13 @@
 
 (eval-when-compile
   (require 'project)
-  (require 'vc)
-  (require 'pcase))
+  (require 'vc))
 
 (eval-when-compile
   (defvar evil-mode-line-tag)
-  (defvar winum-auto-setup-mode-line))
+  (defvar winum-auto-setup-mode-line)
+  (defvar winum-mode)
+  (defvar evil-mode))
 
 (eval-when-compile
   (declare-function winum-get-number-string "ext:winum"))
@@ -67,8 +68,9 @@ the `symbols' suffix. So `buffer-status' for instance gets turned into
                                  (symbol-name symbols)))
          (symbols-alist (symbol-value (intern-soft symbols-string))))
     (if symbols-alist
-        (or (alist-get key symbols-alist)
-            (user-error "Symbol %s doesn't exist in %s" key symbols-string))
+        (if (assoc key symbols-alist)
+            (alist-get key symbols-alist)
+          (user-error "Symbol %s doesn't exist in %s" key symbols-string))
       (user-error "Symbols alist %s doesn't exist" symbols-string))))
 
 (defun lordar-mode-line-segments-propertize (text face)
@@ -131,39 +133,62 @@ If WIDTH is nil set it to 1."
   "Face used for displaying the major mode in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-major-mode ()
-  "Pretty name of current buffer's major mode."
-  (lordar-mode-line-segments-propertize mode-name 'major-mode))
+(defun lordar-mode-line-segments-major-mode (&optional format-string)
+  "Return the pretty name of the current buffer's major mode.
+Use FORMAT-STRING to change the output."
+  (let* ((format-string (or format-string "%s"))
+         (mode-name (format format-string mode-name)))
+    (lordar-mode-line-segments-propertize mode-name 'major-mode)))
 
 ;;;; Buffer Name
 
+;; The name of the buffer.
+;; Example: lordar-mode-line-segments.el
+
 (defface lordar-mode-line-buffer-name
   '((t (:inherit lordar-mode-line-active)))
-  "Face used for displaying the value of `buffer-name'."
+  "Face used for displaying the buffer name in the mode line when active."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-name-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the value of `buffer-name' when inactive."
+  "Face used for displaying the buffer name in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-buffer-name ()
-  "Return the name of the current buffer."
-  (format-mode-line "%b" (lordar-mode-line-segments--get-face 'buffer-name)))
+(defun lordar-mode-line-segments-buffer-name (&optional format-string)
+  "Return the name of the current buffer.
+Use FORMAT-STRING to change the output."
+  (let* ((format-string (or format-string "%s"))
+         (buffer-name (format format-string (buffer-name))))
+    (lordar-mode-line-segments-propertize buffer-name 'buffer-name)))
 
 ;;;; Buffer Status
 
+;; The status of the buffer can be:
+;; - not modified,
+;; - modified, or
+;; - read-only.
+;; The text returned per status is defined in the alist
+;; `lordar-mode-line-buffer-status-symbols'.
+
 (defcustom lordar-mode-line-buffer-status-symbols
-  '((buffer-not-modified . "")
-    (buffer-modified . "* ")
+  '((buffer-not-modified . nil)
+    (buffer-modified . "*")
     ;; %% is needed to print %.
-    (buffer-read-only . "%% "))
+    (buffer-read-only . "%%"))
   "Symbols for buffer status in the mode line.
-Each entry is a cons cell with a keyword and a corresponding format string."
+Each entry is a cons cell with a keyword and a corresponding string.
+Valid keywords are:
+- `buffer-not-modified`: for buffers that are not modified.
+- `buffer-modified`: for buffers that are modified.
+- `buffer-read-only`: for buffers that are read-only."
   :group 'lordar-mode-line
-  :type '(alist :tag "Character"
-                :key-type (symbol :tag "Symbol name")
-                :value-type (character :tag "Character to use")))
+  :type '(alist :tag "String"
+                :key-type
+                (choice (const :tag "Buffer not modified" buffer-not-modified)
+                        (const :tag "Buffer modified" buffer-modified)
+                        (const :tag "Buffer read-only" buffer-read-only))
+                :value-type (string :tag "String to use")))
 
 (defface lordar-mode-line-buffer-status
   '((t (:inherit lordar-mode-line-active)))
@@ -177,36 +202,39 @@ Each entry is a cons cell with a keyword and a corresponding format string."
 
 (defface lordar-mode-line-buffer-status-modified
   '((t (:inherit lordar-mode-line-active)))
-  "Face used for displaying modified status in the mode line."
+  "Face used for displaying the modified status in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-status-modified-inactive
-  '((t (:inherit lordar-mode-line-active)))
-  "Face used for displaying modified status in the mode line when inactive."
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the modified status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-status-read-only
   '((t (:inherit lordar-mode-line-warning)))
-  "Face used for displaying read-only status in the mode line."
+  "Face used for displaying the read-only status in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-status-read-only-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying read-only status in the mode line when inactive."
+  "Face used for displaying the read-only status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-buffer-status ()
+(defun lordar-mode-line-segments-buffer-status (&optional format-string)
   "Return an indicator representing the status of the current buffer.
-Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
+Uses symbols defined in `lordar-mode-line-buffer-status-symbols'.
+Use FORMAT-STRING to change the output."
   (when (buffer-file-name (buffer-base-buffer))
-    (let* ((symbol-and-face
-            (cond
-             (buffer-read-only '(buffer-read-only buffer-status-read-only))
-             ((buffer-modified-p) '(buffer-modified buffer-status-modified))
-             (t '(buffer-not-modified buffer-status))))
-           (symbol (lordar-mode-line-segments--get-symbol
-                    (car symbol-and-face) 'buffer-status))
-           (face (lordar-mode-line-segments--get-face (cadr symbol-and-face))))
+    (when-let* ((format-string (or format-string "%s"))
+                (symbol-and-face
+                 (cond
+                  (buffer-read-only '(buffer-read-only buffer-status-read-only))
+                  ((buffer-modified-p) '(buffer-modified buffer-status-modified))
+                  (t '(buffer-not-modified buffer-status))))
+                (symbol (lordar-mode-line-segments--get-symbol
+                         (car symbol-and-face) 'buffer-status))
+                (symbol (format format-string symbol))
+                (face (lordar-mode-line-segments--get-face (cadr symbol-and-face))))
       (propertize symbol 'face face))))
 
 ;;;; Project Directory
@@ -221,90 +249,160 @@ Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
   "Face used for displaying buffer status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-project-root-basename ()
-  "Return the project root basename.
-If not in a project the basename of `default-directory' is returned."
-  (let* ((root
-          (if-let* ((project (project-current)))
-              (project-root project)
-            default-directory)))
-    (lordar-mode-line-segments-propertize
-     (file-name-nondirectory (directory-file-name (file-local-name root)))
-     'project-directory)))
+(defun lordar-mode-line-segments--project-root-buffer-valid-p  ()
+  "Check if the current buffer is a valid project buffer.
+A buffer is considered valid if it is associated with a file or if it is in
+`dired-mode'."
+  (or (buffer-file-name)
+      (eq major-mode 'dired-mode)))
 
-(defun lordar-mode-line-segments-project-root-relative-directory ()
+(defun lordar-mode-line-segments-project-root-basename (&optional format-string)
+  "Return the project root basename.
+If not in a project the basename of `default-directory' is returned.
+Use FORMAT-STRING to change the output."
+  (when (lordar-mode-line-segments--project-root-buffer-valid-p)
+    (let* ((format-string (or format-string "%s"))
+           (root (if-let* ((project (project-current)))
+                     (project-root project)
+                   default-directory))
+           (basename (file-name-nondirectory
+                      (directory-file-name (file-local-name root))))
+           (basename (format format-string basename)))
+      (lordar-mode-line-segments-propertize basename 'project-directory))))
+
+(defun lordar-mode-line-segments-project-root-relative-directory (&optional format-string)
   "Return the directory path relative to the root of the project.
 If not in a project the `default-directory' is returned.
 Examples:
 - With project at ~/.emacs.test the function returns .emacs.test/modules
   if visiting ~/.emacs.test/modules/lang-elisp.el.
 - With no project the function returns ~/projects
-  if visiting ~/projects/emacs-never-dies.org"
-  (let* (directory)
-    (if-let* ((project (project-current))
-              (root (project-root project))
-              (root-parent (file-name-parent-directory root))
-              (relative-dir (file-relative-name default-directory
-                                                root-parent)))
-        (setq directory relative-dir)
-      (setq directory default-directory))
-    (lordar-mode-line-segments-propertize
-     (directory-file-name (abbreviate-file-name
-                           (file-local-name directory)))
-     'project-directory)))
+  if visiting ~/projects/emacs-never-dies.org
+Use FORMAT-STRING to change the output."
+  (when (lordar-mode-line-segments--project-root-buffer-valid-p)
+    (let* ((format-string (or format-string "%s"))
+           (directory (if-let* ((project (project-current))
+                                (root (project-root project))
+                                (root-parent (file-name-parent-directory root))
+                                (relative-dir
+                                 (file-relative-name default-directory
+                                                     root-parent)))
+                          relative-dir
+                        default-directory))
+           (directory (directory-file-name (abbreviate-file-name
+                                            (file-local-name directory))))
+           (directory (format format-string directory)))
+      (lordar-mode-line-segments-propertize directory 'project-directory))))
+
+;;;; Version Control Branch
+
+(defface lordar-mode-line-vc-branch
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying the VC branch name in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-vc-branch-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the VC branch name in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-vc-branch (&optional format-string)
+  "Return the VC branch name for the current buffer.
+Use FORMAT-STRING to change the output."
+  (when (and vc-mode buffer-file-name)
+    (when-let* ((format-string (or format-string "%s"))
+                (backend (vc-backend buffer-file-name))
+                (branch (cond
+                         ((equal backend 'Git) (substring-no-properties vc-mode 5))
+                         ((equal backend 'Hg) (substring-no-properties vc-mode 4))))
+                (branch (format format-string branch)))
+      (lordar-mode-line-segments-propertize branch 'vc-branch))))
 
 ;;;; Version Control State
 
-(defvar-local lordar-mode-line-segments--vc-text nil
-  "Mode line segment string indicating the current state of `vc-mode'.")
+(defcustom lordar-mode-line-vc-state-symbols
+  '((up-to-date . nil)
+    ;; File has been edited.
+    (edited . "*")
+    ;; More recent version in repo.
+    (needs-update . "!u")
+    ;; File edited and more recent version in repo.
+    (needs-merge . "!m")
+    ;; Scheduled to go into the repository on the next commit.
+    (added . "*")
+    ;; Will be deleted on next commit.
+    (removed . "x")
+    ;; File contains conflicts as the result of a merge.
+    (conflict . "!c")
+    ;; File is ignored.
+    (ignored . "x")
+    ;; Will be used for the other states.
+    (default . nil))
+  "Symbols for buffer status in the mode line.
+Each entry is a cons cell with a keyword and a corresponding string.
+Valid keywords are:"
+  :group 'lordar-mode-line
+  :type '(alist :tag "String"
+                :key-type
+                (choice (const :tag "Buffer not modified" buffer-not-modified)
+                        (const :tag "Buffer modified" buffer-modified)
+                        (const :tag "Buffer read-only" buffer-read-only))
+                :value-type (string :tag "String to use")))
 
-;; (defun lordar-mode-line-segments--vc-get-branch (vc-mode-str backend)
-;;   "Return name of current file's branch for BACKEND according to `vc-mode'.
-;; VC-MODE-STR is expected to be the value of `vc-mode' in the current buffer.
-;; If `vc-display-status' is nil, return the name of BACKEND."
-;;   (or (unless vc-display-status
-;;         (symbol-name backend))
-;;       (pcase backend
-;;         ('Git (substring-no-properties vc-mode-str 5))
-;;         ('Hg (substring-no-properties vc-mode-str 4)))
-;;       (ignore-errors
-;;         (substring (vc-working-revision buffer-file-name backend) 0 7))
-;;       "???"))
+(defface lordar-mode-line-vc-state
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying the VC state in the mode line."
+  :group 'lordar-mode-line-faces)
 
-;; TODO
-;; (defun lordar-mode-line--vc-update (&rest _args)
-;;   "Update `mood-line-segment-vc--text' against the current VCS state."
-;;   (setq mood-line-segment-vc--text
-;;         (when-let* ((vc-active (and vc-mode buffer-file-name))
-;;                     (backend (vc-backend buffer-file-name))
-;;                     (state (vc-state buffer-file-name))
-;;                     (rev (mood-line-segment-vc--rev vc-mode backend)))
-;;           (cond
-;;            ((memq state '(edited added))
-;;             (format #("%s %s"
-;;                       0 2 (face mood-line-status-info))
-;;                     (mood-line--get-glyph :vc-added)
-;;                     rev))
-;;            ((eq state 'needs-merge)
-;;             (format #("%s %s"
-;;                       0 2 (face mood-line-status-warning))
-;;                     (mood-line--get-glyph :vc-needs-merge)
-;;                     rev))
-;;            ((eq state 'needs-update)
-;;             (format #("%s %s"
-;;                       0 2 (face mood-line-status-warning))
-;;                     (mood-line--get-glyph :vc-needs-update)
-;;                     rev))
-;;            ((memq state '(removed conflict unregistered))
-;;             (format #("%s %s"
-;;                       0 2 (face mood-line-status-error))
-;;                     (mood-line--get-glyph :vc-conflict)
-;;                     rev))
-;;            (t
-;;             (format #("%s %s"
-;;                       0 5 (face mood-line-status-neutral))
-;;                     (mood-line--get-glyph :vc-good)
-;;                     rev))))))
+(defface lordar-mode-line-vc-state-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the VC state in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-vc-state-dirty
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying the VC state in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-vc-state-dirty-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the VC state in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-vc-state-error
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying the VC state in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-vc-state-error-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the VC state in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-vc-state (&optional format-string)
+  "Return an indicator representing the status of the current buffer.
+Uses symbols defined in `lordar-mode-line-buffer-status-symbols'.
+Use FORMAT-STRING to change the output."
+  (when (and vc-mode buffer-file-name)
+    (when-let* ((format-string (or format-string "%s"))
+                (state (vc-state buffer-file-name)))
+      (when-let* ((symbol-and-face
+                   (cond
+                    ((eq state 'up-to-date) '(up-to-date vc-state))
+                    ((eq state 'edited) '(edited vc-state-dirty))
+                    ((eq state 'needs-update) '(needs-update vc-state-dirty))
+                    ((eq state 'needs-merge) '(needs-merge vc-state-dirty))
+                    ((eq state 'added) '(needs-merge vc-state-dirty))
+                    ((eq state 'removed) '(needs-merge vc-state))
+                    ((eq state 'conflict) '(needs-merge vc-state-error))
+                    ((eq state 'ignored) '(needs-merge vc-state))
+                    (t '(default vc-state))))
+                  (symbol (lordar-mode-line-segments--get-symbol
+                           (car symbol-and-face) 'vc-state))
+                  (symbol (format format-string symbol))
+                  (face (lordar-mode-line-segments--get-face
+                         (cadr symbol-and-face))))
+        (propertize symbol 'face face)))))
 
 ;;;; Input Method
 
@@ -322,9 +420,14 @@ Examples:
   "Face used for displaying buffer status in the mode line."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-evil-state ()
-  "Return the value of `evil-mode-line-tag`."
-  (lordar-mode-line-segments-propertize (eval evil-mode-line-tag) 'evil-state))
+(defun lordar-mode-line-segments-evil-state (&optional format-string)
+  "Return the value of `evil-mode-line-tag'.
+Use FORMAT-STRING to change the output."
+  (when evil-mode
+    (when-let* ((format-string (or format-string "%s"))
+                (evil-tag (eval evil-mode-line-tag))
+                (evil-tag (format format-string evil-tag)))
+      (lordar-mode-line-segments-propertize evil-tag 'evil-state))))
 
 ;;;; Winum (Window Number)
 
@@ -338,16 +441,17 @@ Examples:
   "Face used for displaying `winum' number in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-winum (&optional padding)
+(defun lordar-mode-line-segments-winum (&optional format-string)
   "Return the winum number string for the mode line, with optional PADDING.
 If PADDING is provided, it will be added before and after the winum number.
-This function also ensures `winum-auto-setup-mode-line' is disabled."
+This function also ensures `winum-auto-setup-mode-line' is disabled.
+Use FORMAT-STRING to change the output."
   (setq winum-auto-setup-mode-line nil)
-  (let* ((nr (winum-get-number-string))
-         (text (if padding
-                   (format "%s%s%s" padding nr padding)
-                 nr)))
-    (lordar-mode-line-segments-propertize text 'winum)))
+  (when winum-mode
+    (when-let* ((format-string (or format-string "%s"))
+                (nr (winum-get-number-string))
+                (nr (format format-string nr) ))
+      (lordar-mode-line-segments-propertize nr 'winum))))
 
 (provide 'lordar-mode-line-segments)
 

@@ -122,18 +122,16 @@ line."
         '((:eval
            (concat
             (lordar-mode-line-segments-adjust-height)
-            (lordar-mode-line-segments-winum
-             (lordar-mode-line-segments-vertical-space))
-            (lordar-mode-line-segments-vertical-space)
-            (lordar-mode-line-segments-evil-state)
-            (lordar-mode-line-segments-vertical-space)
-            (lordar-mode-line-segments-buffer-status)
-            (lordar-mode-line-segments-buffer-name)
-            (lordar-mode-line-segments-vertical-space 1.5)
-            (lordar-mode-line-segments-project-root-relative-directory)))
+            (lordar-mode-line-segments-winum " %s ")
+            (lordar-mode-line-segments-evil-state " %s")
+            (lordar-mode-line-segments-buffer-status " %s")
+            (lordar-mode-line-segments-buffer-name " %s")
+            (lordar-mode-line-segments-project-root-relative-directory " %s")))
           mode-line-format-right-align
           (:eval
            (concat
+            (lordar-mode-line-segments-vc-state "%s ")
+            (lordar-mode-line-segments-vc-branch "%s ")
             (lordar-mode-line-segments-major-mode)
             (lordar-mode-line-segments-vertical-space)))))
   ;; Do list the buffers
