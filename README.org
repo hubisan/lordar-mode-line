@@ -4,7 +4,7 @@
 
 [[https://www.gnu.org/licenses/gpl-3.0][https://img.shields.io/badge/License-GPL%20v3-blue.svg]] [[https://github.com/hubisan/lordar-mode-line/actions/workflows/tests.yml][https://github.com/hubisan/lordar-mode-line/actions/workflows/tests.yml/badge.svg]]
 
-A minimal mode line for Emacs. Requires Emacs 30.
+A minimal mode line for Emacs.
 
 ** Main features                                                :noexport_0:
 
@@ -12,9 +12,11 @@ A minimal mode line for Emacs. Requires Emacs 30.
 
 - You can add your own segments, see the documentation for [[#custom-segments][instructions]].
 
-- To share a segment, make a pull request and add it to [[file:custom-segments/custom-segments.org][custom-segments.org]]. I don't plan to add more segments to the code base to keep it small.
+- To share a segment, write an extension (package) or make a pull request and add it to [[file:custom-segments/custom-segments.org][custom-segments.org]]. I don't plan to add more segments to the code base to keep it small.
 
 - By default, some major-mode-specific mode-line formats are defined and set up using major-mode hooks. You can disable/customize these or add your own.
+
+-  Requires Emacs 30.
 
 -----
 

@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Hubmann <hubisan@gmail.com>
 ;; URL: https://github.com/hubisan/lordar-mode-line
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "30.0.50"))
+;; Package-Requires: ((emacs "29.4"))
 ;; Keywords: mode-line faces
 
 ;; This file is not part of GNU Emacs
@@ -117,6 +117,13 @@
             (lordar-mode-line-segments-major-mode)
             (lordar-mode-line-segments-vertical-space)
             (lordar-mode-line-segments-input-method " %s ")))))
+
+  ;; VC needs at least an advice, probably no hooks:
+  ;; Advice vc-refresh-state
+  ;; Find-file hook calls vc-refresh-state, so not needed.
+  ;; And on save is probably also not needed. Rather add a hook to call
+  ;; vc-refresh-state.
+
   ;; Do list the buffers
   ;; Apply the mode line depending on the major mode
   ;; Need a list for this and the function

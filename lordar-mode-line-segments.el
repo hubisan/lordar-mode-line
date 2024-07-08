@@ -120,6 +120,12 @@ If WIDTH is nil set it to 1."
     (propertize " " 'display `((space-width ,width))
                 'face (lordar-mode-line-segments--get-face 'vertical-space))))
 
+;;;; Right Align
+
+;; Copied from Emacs 30. Want to use my own face though.
+
+
+
 ;;;; Major Mode
 
 (defface lordar-mode-line-major-mode
