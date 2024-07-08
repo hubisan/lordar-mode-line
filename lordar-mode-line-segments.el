@@ -38,9 +38,8 @@
   (defvar evil-mode))
 
 (eval-when-compile
-  (declare-function winum-get-number-string "ext:winum"))
-
-;;;;
+  (declare-function winum-get-number-string "ext:winum")
+  (declare-function flymake--mode-line-counter "flymake"))
 
 ;;;; Helpers
 
@@ -201,7 +200,7 @@ Valid keywords are:
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-status-modified
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line-error)))
   "Face used for displaying the modified status in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -234,7 +233,8 @@ Use FORMAT-STRING to change the output."
                 (symbol (lordar-mode-line-segments--get-symbol
                          (car symbol-and-face) 'buffer-status))
                 (symbol (format format-string symbol))
-                (face (lordar-mode-line-segments--get-face (cadr symbol-and-face))))
+                (face (lordar-mode-line-segments--get-face
+                       (cadr symbol-and-face))))
       (propertize symbol 'face face))))
 
 ;;;; Project Directory
@@ -312,9 +312,10 @@ Use FORMAT-STRING to change the output."
   (when (and vc-mode buffer-file-name)
     (when-let* ((format-string (or format-string "%s"))
                 (backend (vc-backend buffer-file-name))
-                (branch (cond
-                         ((equal backend 'Git) (substring-no-properties vc-mode 5))
-                         ((equal backend 'Hg) (substring-no-properties vc-mode 4))))
+                (branch
+                 (cond
+                  ((equal backend 'Git) (substring-no-properties vc-mode 5))
+                  ((equal backend 'Hg) (substring-no-properties vc-mode 4))))
                 (branch (format format-string branch)))
       (lordar-mode-line-segments-propertize branch 'vc-branch))))
 
@@ -360,7 +361,7 @@ Valid keywords are:"
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-vc-state-dirty
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line-warning)))
   "Face used for displaying the VC state in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -370,7 +371,7 @@ Valid keywords are:"
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-vc-state-error
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line-error)))
   "Face used for displaying the VC state in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -406,7 +407,143 @@ Use FORMAT-STRING to change the output."
 
 ;;;; Input Method
 
+(defface lordar-mode-line-input-method
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying the VC state in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-input-method-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the VC state in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-input-method (&optional format-string)
+  "Return the current input method.
+Use FORMAT-STRING to change the output."
+  ;; From doom-modeline. Apparently evil adds some advice or so and
+  ;; if evil is used `current-input-method' cannot be used.
+  (when-let* ((format-string (or format-string "%s"))
+              (input-method (cond
+                             (current-input-method current-input-method-title)
+                             ((and (bound-and-true-p evil-local-mode)
+                                   (bound-and-true-p evil-input-method))
+                              (nth 3 (assoc default-input-method
+                                            input-method-alist)))))
+              (input-method (format format-string input-method)))
+    (lordar-mode-line-segments-propertize input-method 'input-method)))
+
 ;;;; Syntax-Checking
+
+(defcustom lordar-mode-line-syntax-checking-show-0 nil
+  "If nil don't show 0 counters.
+You can overwrite this behaviour in the functions when needed."
+  :group 'lordar-mode-line
+  :type 'boolean)
+
+(defcustom lordar-mode-line-syntax-checking-use-0-faces t
+  "When non-nil use special faces if a counter is 0.
+Uses faces `lordar-mode-line-syntax-checking-0-counter' and
+`lordar-mode-line-syntax-checking-0-counter-inactive'.
+You can overwrite this behaviour in the functions when needed."
+  :group 'lordar-mode-line
+  :type 'boolean)
+
+(defface lordar-mode-line-syntax-checking-error
+  '((t (:inherit lordar-mode-line-error)))
+  "Face used for displaying the VC state in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-syntax-checking-error-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the VC state in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-syntax-checking-warning
+  '((t (:inherit lordar-mode-line-warning)))
+  "Face used for displaying the VC state in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-syntax-checking-warning-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the VC state in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-syntax-checking-note
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying the VC state in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-syntax-checking-note-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the VC state in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-syntax-checking-0-counter
+  '((t (:inherit lordar-mode-line-active)))
+  "Face used for displaying the VC state in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-syntax-checking-0-counter-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used for displaying the VC state in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments--syntax-checking-counter (type)
+  "Return counter for TYPE :error, :warning or :note."
+  (cond
+   ((bound-and-true-p flycheck-mode)
+    ;; Not implemented as not using anymore.
+    (ignore))
+   ((bound-and-true-p flymake-mode)
+    (cadadr (flymake--mode-line-counter type)))))
+
+(defun lordar-mode-line-segments--syntax-checking (type &optional format-string
+                                                        show-0 use-0-faces)
+  "Returns the number or errors for TYPE formatted for mode line.
+TYPE is :error, :warning or :note. Use FORMAT-STRING to change the output. If
+SHOW-0 is non-nil then also show the counter if it is 0, uses
+`lordar-mode-line-syntax-checking-show-0' if not set. If USE-0-FACES is non-nil
+then use special faces for 0 count, uses
+`lordar-mode-line-syntax-checking-use-0-faces' if not set."
+  (when-let ((counter (lordar-mode-line-segments--syntax-checking-counter type)))
+    (let* ((format-string (or format-string "%s"))
+           (is-not-0 (> (string-to-number counter) 0))
+           (show-0 (or show-0 lordar-mode-line-syntax-checking-show-0))
+           (use-0-faces (or use-0-faces
+                            lordar-mode-line-syntax-checking-use-0-faces)))
+      (when-let* ((text (when (or is-not-0 show-0)
+                          (format format-string counter)))
+                  (face (if (and (not is-not-0) use-0-faces)
+                            'syntax-checking-0-counter
+                          (cond
+                           ((eq type :error) 'syntax-checking-error)
+                           ((eq type :warning) 'syntax-checking-warning)
+                           ((eq type :note) 'syntax-checking-note)))))
+        (lordar-mode-line-segments-propertize text face)))))
+
+(defun lordar-mode-line-segments-syntax-checking-error-counter (&optional
+                                                                format-string
+                                                                show-0
+                                                                use-0-faces)
+  "Return the error counter report by enabled syntax checker."
+  (lordar-mode-line-segments--syntax-checking
+   :error format-string show-0 use-0-faces))
+
+(defun lordar-mode-line-segments-syntax-checking-warning-counter (&optional
+                                                                format-string
+                                                                show-0
+                                                                use-0-faces)
+  "Return the error counter report by enabled syntax checker."
+  (lordar-mode-line-segments--syntax-checking
+   :warning format-string show-0 use-0-faces))
+
+(defun lordar-mode-line-segments-syntax-checking-note-counter (&optional
+                                                                format-string
+                                                                show-0
+                                                                use-0-faces)
+  "Return the error counter report by enabled syntax checker."
+  (lordar-mode-line-segments--syntax-checking
+   :note format-string show-0 use-0-faces))
 
 ;;;; Evil State
 

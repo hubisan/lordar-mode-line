@@ -42,38 +42,15 @@
 
 ;;;; Customization
 
+;; Segment's customization variables are defined before each segment.
+
 (defgroup lordar-mode-line nil
   "A minimal mode line configuration."
   :group 'lordar-mode-line)
 
-(defcustom lordar-mode-line-checker-symbols
-  '(;; Checker format string will be called with number of errors.
-    (:checker-info . "i%s")
-    (:checker-issues . "e%s")
-    (:checker-good . "-")
-    (:checker-checking . "*")
-    (:checker-errored . "?")
-    (:checker-interrupted . "?")
-    ;; VC format string will be called with branch.
-    (:vc-added . "a-%s")
-    (:vc-needs-merge . "m-%s")
-    (:vc-needs-update . "u-%s")
-    (:vc-conflict . "c-%s")
-    (:vc-others . "?-%s")
-    (:vc-good . "@-%s")
-    ;; Buffer will be called with no argument.
-    (:buffer-modified . "*")
-    (:buffer-read-only . "#"))
-  "A list of symbols used in the mode line for various status indicators.
-Each entry is a cons cell where the key is a keyword describing the status,
-and the value is a format string representing the status symbol in the mode
-line."
-  :group 'lordar-mode-line
-  :type '(alist :tag "Character"
-                :key-type (symbol :tag "Symbol name")
-                :value-type (character :tag "Character to use")))
-
 ;;;; Faces
+
+;; Segment's faces are defined before each segment.
 
 (defgroup lordar-mode-line-faces nil
   "Faces used by lordar-mode-line."
@@ -92,12 +69,12 @@ line."
 
 (defface lordar-mode-line-warning
   '((t (:inherit warning)))
-  "Default face used if the mode-line is active."
+  "Default face used for a warning in the mode-line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-error
   '((t (:inherit error)))
-  "Default face used if the mode-line is inactive."
+  "Default face used for an error in the mode-line."
   :group 'lordar-mode-line-faces)
 
 ;;;; Variables
@@ -123,17 +100,23 @@ line."
            (concat
             (lordar-mode-line-segments-adjust-height)
             (lordar-mode-line-segments-winum " %s ")
-            (lordar-mode-line-segments-evil-state " %s")
-            (lordar-mode-line-segments-buffer-status " %s")
-            (lordar-mode-line-segments-buffer-name " %s")
+            (lordar-mode-line-segments-evil-state " %s ")
+            (lordar-mode-line-segments-buffer-status
+             (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
+            (lordar-mode-line-segments-buffer-name "%s")
             (lordar-mode-line-segments-project-root-relative-directory " %s")))
           mode-line-format-right-align
           (:eval
            (concat
-            (lordar-mode-line-segments-vc-state "%s ")
+            (lordar-mode-line-segments-syntax-checking-error-counter "%s ")
+            (lordar-mode-line-segments-syntax-checking-warning-counter "%s ")
+            (lordar-mode-line-segments-syntax-checking-note-counter "%s ")
+            (lordar-mode-line-segments-vc-state
+             (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
             (lordar-mode-line-segments-vc-branch "%s ")
             (lordar-mode-line-segments-major-mode)
-            (lordar-mode-line-segments-vertical-space)))))
+            (lordar-mode-line-segments-vertical-space)
+            (lordar-mode-line-segments-input-method " %s ")))))
   ;; Do list the buffers
   ;; Apply the mode line depending on the major mode
   ;; Need a list for this and the function
