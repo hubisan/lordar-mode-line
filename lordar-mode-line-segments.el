@@ -35,7 +35,11 @@
   (defvar evil-mode-line-tag)
   (defvar winum-auto-setup-mode-line)
   (defvar winum-mode)
-  (defvar evil-mode))
+  (defvar evil-mode)
+  (defvar current-input-method)
+  (defvar current-input-method-title)
+  (defvar default-input-method)
+  (defvar input-method-alist))
 
 (eval-when-compile
   (declare-function winum-get-number-string "ext:winum")
@@ -78,6 +82,89 @@ If the selected window is active, set face with `lordar-mode-line-' as prefix.
 If inactive, set the corresponding FACE with an additional `-inactive' suffix."
   (propertize text 'face (lordar-mode-line-segments--get-face face)))
 
+;;;; Right Align
+
+;; Copied from Emacs 30. Want to use my own face though. See:
+;; - `mode-line-format-right-align'.
+;; - `mode--line-format-right-align'
+
+(defcustom lordar-mode-line-right-align-edge 'right-fringe
+  "Where function `lordar-mode-line--format-right-align' should align to.
+Internally, that function uses `:align-to' in a display property,
+so aligns to the left edge of the given area.
+
+Must be set to a symbol.  Acceptable values are:
+- `window': align to extreme right of window, regardless of margins
+  or fringes
+- `right-fringe': align to right-fringe
+- `right-margin': align to right-margin"
+  :type '(choice (const right-margin)
+                 (const right-fringe)
+                 (const window))
+  :group 'lordar-mode-line)
+
+(defface lordar-mode-line-right-align
+  '((t (:inherit lordar-mode-line-active)))
+  "Face for invisible elements that adjust the mode-line height."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-right-align-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face for invisible elements that adjust the mode-line height."
+  :group 'lordar-mode-line-faces)
+
+(defvar lordar-mode-line-segments-right-align
+  '(:eval (lordar-mode-line-segments--right-align))
+  "Mode line construct to right align all following constructs.")
+;;;###autoload
+(put 'lordar-mode-line-segments-right-align 'risky-local-variable t)
+
+(defun lordar-mode-line-segments--right-align ()
+  "Right-align all following mode-line constructs.
+
+When the symbol `lordar-mode-line-segments-right-align' appears in
+`mode-line-format', return a string of one space, with a display
+property to make it appear long enough to align anything after that
+symbol to the right of the rendered mode line. Exactly how far to the
+right is controlled by `lordar-mode-line-right-align-edge'.
+
+It is important that the symbol `lordar-mode-line-segments-right-align' be
+included in `mode-line-format' (and not another similar construct such
+as `(:eval (mode-line-format-right-align)'). This is because the symbol
+`lordar-mode-line-segments-right-align' is processed by `format-mode-line'
+as a variable."
+  (let* ((rest (cdr (memq 'lordar-mode-line-segments-right-align
+                          mode-line-format)))
+         (rest-str (format-mode-line `("" ,@rest)))
+         (rest-width (progn
+                       (add-face-text-property
+                        0 (length rest-str) 'mode-line t rest-str)
+                       (string-pixel-width rest-str)))
+         (face (lordar-mode-line-segments--get-face 'right-align))
+         (align-edge lordar-mode-line-right-align-edge))
+    (propertize " "
+                'face face
+                'display
+                ;; The `right' spec doesn't work on TTY frames
+                ;; when windows are split horizontally (bug#59620)
+                (if (and (display-graphic-p) (not (eq align-edge 'window)))
+                    `(space :align-to (- ,align-edge (,rest-width)))
+                  `(space :align-to
+                          (,(- (window-pixel-width)
+                               (window-scroll-bar-width)
+                               (window-right-divider-width)
+                               (* (or (car (window-margins)) 0)
+                                  (frame-char-width))
+                               ;; Manually account for value of
+                               ;; `lordar-mode-line-right-align-edge' even
+                               ;; when display is non-graphical
+                               (cond ((eq align-edge 'right-margin)
+                                      (or (cdr (window-margins)) 0))
+                                     ((eq align-edge 'right-fringe)
+                                      (or (cadr (window-fringes)) 0))
+                                     (t 0))
+                               rest-width)))))))
+
 ;;;; Adjust Height
 
 (defcustom lordar-mode-line-height-adjust-factor 0.2
@@ -119,11 +206,6 @@ If WIDTH is nil set it to 1."
   (let* ((width (or width 1.0)))
     (propertize " " 'display `((space-width ,width))
                 'face (lordar-mode-line-segments--get-face 'vertical-space))))
-
-;;;; Right Align
-
-;; Copied from Emacs 30. Want to use my own face though.
-
 
 
 ;;;; Major Mode
@@ -224,6 +306,7 @@ Valid keywords are:
   '((t (:inherit lordar-mode-line-inactive)))
   "Face used for displaying the read-only status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
+
 
 (defun lordar-mode-line-segments-buffer-status (&optional format-string)
   "Return an indicator representing the status of the current buffer.
@@ -531,23 +614,29 @@ then use special faces for 0 count, uses
                                                                 format-string
                                                                 show-0
                                                                 use-0-faces)
-  "Return the error counter report by enabled syntax checker."
+  "Return the error counter report by enabled syntax checker.
+For FORMAT-STRING, SHOW-0 and USE-0-FACES see
+`lordar-mode-line-segments--syntax-checking'."
   (lordar-mode-line-segments--syntax-checking
    :error format-string show-0 use-0-faces))
 
 (defun lordar-mode-line-segments-syntax-checking-warning-counter (&optional
-                                                                format-string
-                                                                show-0
-                                                                use-0-faces)
-  "Return the error counter report by enabled syntax checker."
+                                                                  format-string
+                                                                  show-0
+                                                                  use-0-faces)
+  "Return the error counter report by enabled syntax checker.
+For FORMAT-STRING, SHOW-0 and USE-0-FACES see
+`lordar-mode-line-segments--syntax-checking'."
   (lordar-mode-line-segments--syntax-checking
    :warning format-string show-0 use-0-faces))
 
 (defun lordar-mode-line-segments-syntax-checking-note-counter (&optional
-                                                                format-string
-                                                                show-0
-                                                                use-0-faces)
-  "Return the error counter report by enabled syntax checker."
+                                                               format-string
+                                                               show-0
+                                                               use-0-faces)
+  "Return the error counter report by enabled syntax checker.
+For FORMAT-STRING, SHOW-0 and USE-0-FACES see
+`lordar-mode-line-segments--syntax-checking'."
   (lordar-mode-line-segments--syntax-checking
    :note format-string show-0 use-0-faces))
 

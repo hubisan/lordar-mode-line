@@ -68,12 +68,12 @@
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-warning
-  '((t (:inherit warning)))
+  '((t (:inherit (warning lordar-mode-line-active))))
   "Default face used for a warning in the mode-line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-error
-  '((t (:inherit error)))
+  '((t (:inherit (error lordar-mode-line-active))))
   "Default face used for an error in the mode-line."
   :group 'lordar-mode-line-faces)
 
@@ -105,7 +105,7 @@
              (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
             (lordar-mode-line-segments-buffer-name "%s")
             (lordar-mode-line-segments-project-root-relative-directory " %s")))
-          mode-line-format-right-align
+          lordar-mode-line-segments-right-align
           (:eval
            (concat
             (lordar-mode-line-segments-syntax-checking-error-counter "%s ")
