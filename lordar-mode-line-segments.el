@@ -47,20 +47,24 @@
 
 ;;;; Helpers
 
-(defun lordar-mode-line-segments--get-face (face)
+(defun lordar-mode-line-segments--get-face (&optional face)
   "Return the appropriate face for the symbol FACE.
 If the selected window is active, return face with `lordar-mode-line-' as
 prefix. If inactive, return the corresponding FACE with an additional
-`-inactive' suffix."
-  (let* ((face (format "lordar-mode-line-%s" (symbol-name face)))
-         (active-face (intern-soft face)))
+`-inactive' suffix. If FACE is nil use the default face."
+  (if face
+      (let* ((face (format "lordar-mode-line-%s" (symbol-name face)))
+             (active-face (intern-soft face)))
+        (if (mode-line-window-selected-p)
+            (or active-face
+                (user-error "Face %s doesn't exist" face))
+          (let* ((inactive-face-string (format "%s-inactive" face))
+                 (inactive-face (intern-soft inactive-face-string)))
+            (or inactive-face
+                (user-error "Face %s doesn't exist" inactive-face-string)))))
     (if (mode-line-window-selected-p)
-        (or active-face
-            (user-error "Face %s doesn't exist" face))
-      (let* ((inactive-face-string (format "%s-inactive" face))
-             (inactive-face (intern-soft inactive-face-string)))
-        (or inactive-face
-            (user-error "Face %s doesn't exist" inactive-face-string))))))
+        'lordar-mode-line
+      'lordar-mode-line-inactive)))
 
 (defun lordar-mode-line-segments--get-symbol (key symbols)
   "Return the symbol associated with KEY from SYMBOLS alist.
@@ -104,7 +108,7 @@ Must be set to a symbol.  Acceptable values are:
   :group 'lordar-mode-line)
 
 (defface lordar-mode-line-right-align
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face for invisible elements that adjust the mode-line height."
   :group 'lordar-mode-line-faces)
 
@@ -191,7 +195,7 @@ If FACTOR is not give use `lordar-mode-line-height-adjust'."
 ;;;; Vertical Space
 
 (defface lordar-mode-line-vertical-space
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying the major mode in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -211,7 +215,7 @@ If WIDTH is nil set it to 1."
 ;;;; Major Mode
 
 (defface lordar-mode-line-major-mode
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying the major mode in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -233,7 +237,7 @@ Use FORMAT-STRING to change the output."
 ;; Example: lordar-mode-line-segments.el
 
 (defface lordar-mode-line-buffer-name
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying the buffer name in the mode line when active."
   :group 'lordar-mode-line-faces)
 
@@ -278,7 +282,7 @@ Valid keywords are:
                 :value-type (string :tag "String to use")))
 
 (defface lordar-mode-line-buffer-status
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying buffer status in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -329,7 +333,7 @@ Use FORMAT-STRING to change the output."
 ;;;; Project Directory
 
 (defface lordar-mode-line-project-directory
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying buffer status in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -386,7 +390,7 @@ Use FORMAT-STRING to change the output."
 ;;;; Version Control Branch
 
 (defface lordar-mode-line-vc-branch
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying the VC branch name in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -440,7 +444,7 @@ Valid keywords are:"
                 :value-type (string :tag "String to use")))
 
 (defface lordar-mode-line-vc-state
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying the VC state in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -497,7 +501,7 @@ Use FORMAT-STRING to change the output."
 ;;;; Input Method
 
 (defface lordar-mode-line-input-method
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying the VC state in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -558,7 +562,7 @@ You can overwrite this behaviour in the functions when needed."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-syntax-checking-note
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying the VC state in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -568,7 +572,7 @@ You can overwrite this behaviour in the functions when needed."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-syntax-checking-0-counter
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying the VC state in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -643,7 +647,7 @@ For FORMAT-STRING, SHOW-0 and USE-0-FACES see
 ;;;; Evil State
 
 (defface lordar-mode-line-evil-state
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying buffer status in the mode line."
   :group 'lordar-mode-line-faces)
 
@@ -664,7 +668,7 @@ Use FORMAT-STRING to change the output."
 ;;;; Winum (Window Number)
 
 (defface lordar-mode-line-winum
-  '((t (:inherit lordar-mode-line-active)))
+  '((t (:inherit lordar-mode-line)))
   "Face used for displaying `winum' number in the mode line."
   :group 'lordar-mode-line-faces)
 

@@ -57,9 +57,9 @@
   :group 'lordar-mode-line
   :group 'faces)
 
-(defface lordar-mode-line-active
-  '((t (:inherit mode-line-active)))
-  "Default face used if the mode-line is active."
+(defface lordar-mode-line
+  '((t (:inherit mode-line-active :background )))
+  "Default face used if the mode-line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-inactive
@@ -68,18 +68,90 @@
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-warning
-  '((t (:inherit (warning lordar-mode-line-active))))
+  `((t (:inherit warning :backround ,(face-background 'lordar-mode-line))))
   "Default face used for a warning in the mode-line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-error
-  '((t (:inherit (error lordar-mode-line-active))))
+  `((t (:inherit error :background ,(face-background 'lordar-mode-line))))
   "Default face used for an error in the mode-line."
   :group 'lordar-mode-line-faces)
 
 ;;;; Variables
 
 ;;;; Helper Functions
+
+;;;; Make Construct
+
+(defvar lordar-mode-line-left-fringe-width 0
+  "Variable to adjust the left side of the mode line if not aligned properly.")
+
+(defvar lordar-mode-line-right-fringe-width 0
+  "Variable to adjust the left side of the mode line if not aligned properly.")
+
+(defun lordar-mode-line-construct (left &optional right default)
+  "Construct a mode line format made of LEFT and RIGHT parts.
+Line can be made DEFAULT. Returned string is padded in the center to fit
+the width of the window."
+  (let* ((format
+          `(:eval
+            (let* ((left (mapconcat
+                          (lambda (element)
+                            (if (stringp element)
+                                (propertize
+                                 element 'face
+                                 (lordar-mode-line-segments--get-face))
+                              (eval element)))
+                          ',left))
+                   (right (mapconcat
+                           (lambda (element)
+                             (if (stringp element)
+                                 (propertize
+                                  element 'face
+                                  (lordar-mode-line-segments--get-face))
+                               (eval element)))
+                           ',right))
+                   (width (window-width))
+                   (outside fringes-outside-margins)
+                   (left-fringe (if outside -1.0 0.0))
+                   (left-margin (if outside 0.0 1.0))
+                   (right-fringe (if outside -1.0 0.0))
+                   (right-margin (if outside -1.0 0.0))
+                   (left-max-size (- width (length right) 2))
+                   (left (if (> (length left) left-max-size)
+                             (concat
+                              (truncate-string-to-width left left-max-size)
+                              (propertize
+                               "…" 'face
+                               (lordar-mode-line-segments--get-face)))
+                           left)))
+              (concat (propertize
+                       " " 'display
+                       `(space :align-to
+                               (+ left-margin
+                                  (,left-fringe . left-fringe)
+                                  (,left-margin . left-margin))))
+                      (propertize
+                       " " 'face 'fringe 'display
+                       '(space :width
+                               (lordar-mode-line-left-fringe-width)))
+                      left
+                      (propertize
+                       " " 'display
+                       `(space :align-to
+                               (- right-margin
+                                  (,right-fringe . right-fringe)
+                                  (,right-margin . right-margin)
+                                  (lordar-mode-line-right-fringe-width)
+                                  ,(length right))))
+                      right
+                      (propertize
+                       " " 'face 'fringe 'display
+                       '(space :width
+                               (lordar-mode-line-right-fringe-width))))))))
+    (if default
+        (setq-default mode-line-format format)
+      (setq-local mode-line-format format))))
 
 ;;;; Minor-mode
 
