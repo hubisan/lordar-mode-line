@@ -89,7 +89,26 @@
 (defvar lordar-mode-line-right-fringe-width 0
   "Variable to adjust the left side of the mode line if not aligned properly.")
 
-(defun lordar-mode-line-construct (left &optional right default)
+(defun lordar-mode-line-set-mode-line (&optional segments default)
+  "Set the mode line, optionally making it the DEFAULT mode line.
+
+SEGMENTS should be a list where the `car' is a list of segments or strings to be
+aligned to the left, and the optional `cdr'contains segments or strings to be
+aligned to the right. The resulting string will be padded in the center to fit
+the width of the window. If SEGMENTS is nil, the default specification
+`lordar-mode-line-default-segments' is used. "
+  (when-let ((modeline
+              (list "%e"
+                    `(:eval (lordar-mode-line--construct-string ',segments)))))
+    (if default
+        (setq-default mode-line-format modeline)
+      (setq-local mode-line-format modeline))))
+
+(defun lordar-mode-line--eval-segments (segments)
+  "Eval the SEGMENTS and concacenate into a string."
+  )
+
+(defun lordar-mode-line--construct-string (left &optional right default)
   "Construct a mode line format made of LEFT and RIGHT parts.
 Line can be made DEFAULT. Returned string is padded in the center to fit
 the width of the window."
