@@ -92,10 +92,10 @@
 (defun lordar-mode-line-set-mode-line (&optional segments default)
   "Set the mode line, optionally making it the DEFAULT mode line.
 
-SEGMENTS should be a list where the `car' is a list of segments or strings to be
-aligned to the left, and the optional `cdr'contains segments or strings to be
-aligned to the right. The resulting string will be padded in the center to fit
-the width of the window. If SEGMENTS is nil, the default specification
+SEGMENTS should be a plist where the `:left' is a list of segments or strings to
+be aligned to the left, and `:right' contains segments or strings to be aligned
+to the right. The resulting string will be padded in the center to fit the width
+of the window. If SEGMENTS is nil, the default specification
 `lordar-mode-line-default-segments' is used. "
   (when-let ((modeline
               (list "%e"
@@ -104,73 +104,93 @@ the width of the window. If SEGMENTS is nil, the default specification
         (setq-default mode-line-format modeline)
       (setq-local mode-line-format modeline))))
 
-(defun lordar-mode-line--eval-segments (segments)
-  "Eval the SEGMENTS and concacenate into a string."
-  )
-
-(defun lordar-mode-line--construct-string (left &optional right default)
+(defun lordar-mode-line--construct-string (segments)
   "Construct a mode line format made of LEFT and RIGHT parts.
 Line can be made DEFAULT. Returned string is padded in the center to fit
 the width of the window."
-  (let* ((format
-          `(:eval
-            (let* ((left (mapconcat
-                          (lambda (element)
-                            (if (stringp element)
-                                (propertize
-                                 element 'face
-                                 (lordar-mode-line-segments--get-face))
-                              (eval element)))
-                          ',left))
-                   (right (mapconcat
-                           (lambda (element)
-                             (if (stringp element)
-                                 (propertize
-                                  element 'face
-                                  (lordar-mode-line-segments--get-face))
-                               (eval element)))
-                           ',right))
-                   (width (window-width))
-                   (outside fringes-outside-margins)
-                   (left-fringe (if outside -1.0 0.0))
-                   (left-margin (if outside 0.0 1.0))
-                   (right-fringe (if outside -1.0 0.0))
-                   (right-margin (if outside -1.0 0.0))
-                   (left-max-size (- width (length right) 2))
-                   (left (if (> (length left) left-max-size)
-                             (concat
-                              (truncate-string-to-width left left-max-size)
-                              (propertize
-                               "…" 'face
-                               (lordar-mode-line-segments--get-face)))
-                           left)))
-              (concat (propertize
-                       " " 'display
-                       `(space :align-to
-                               (+ left-margin
-                                  (,left-fringe . left-fringe)
-                                  (,left-margin . left-margin))))
-                      (propertize
-                       " " 'face 'fringe 'display
-                       '(space :width
-                               (lordar-mode-line-left-fringe-width)))
-                      left
-                      (propertize
-                       " " 'display
-                       `(space :align-to
-                               (- right-margin
-                                  (,right-fringe . right-fringe)
-                                  (,right-margin . right-margin)
-                                  (lordar-mode-line-right-fringe-width)
-                                  ,(length right))))
-                      right
-                      (propertize
-                       " " 'face 'fringe 'display
-                       '(space :width
-                               (lordar-mode-line-right-fringe-width))))))))
-    (if default
-        (setq-default mode-line-format format)
-      (setq-local mode-line-format format))))
+  (let* ((left (plist-get segments :left))
+         (right (plist-get segments :right))
+         (left (when left (lordar-mode-line--eval-segments left)))
+         (right (when right (lordar-mode-line--eval-segments right)))
+         (outside fringes-outside-margins)
+         ;; (left-fringe (if outside -1.0 0.0))
+         (left-margin (if outside 0.0 1.0))
+         (right-fringe (if outside -1.0 0.0))
+         (right-margin (if outside -1.0 0.0))
+
+         ;; (format
+         ;;  `(:eval
+         ;;    (let* (
+
+         ;;           (width (window-width))
+         ;;           (outside fringes-outside-margins)
+         ;;           (left-fringe (if outside -1.0 0.0))
+         ;;           (left-margin (if outside 0.0 1.0))
+         ;;           (right-fringe (if outside -1.0 0.0))
+         ;;           (right-margin (if outside -1.0 0.0))
+         ;;           (left-max-size (- width (length right) 2))
+         ;;           (left (if (> (length left) left-max-size)
+         ;;                     (concat
+         ;;                      (truncate-string-to-width left left-max-size)
+         ;;                      (propertize
+         ;;                       "…" 'face
+         ;;                       (lordar-mode-line-segments--get-face)))
+         ;;                   left)))
+         ;;      (concat (propertize
+         ;;               " " 'display
+         ;;               `(space :align-to
+         ;;                       (+ left-margin
+         ;;                          (,left-fringe . left-fringe)
+         ;;                          (,left-margin . left-margin))))
+         ;;              (propertize
+         ;;               " " 'face 'fringe 'display
+         ;;               '(space :width
+         ;;                       (lordar-mode-line-left-fringe-width)))
+         ;;              left
+         ;;              (propertize
+         ;;               " " 'display
+         ;;               `(space :align-to
+         ;;                       (- right-margin
+         ;;                          (,right-fringe . right-fringe)
+         ;;                          (,right-margin . right-margin)
+         ;;                          (lordar-mode-line-right-fringe-width)
+         ;;                          ,(length right))))
+         ;;              right
+         ;;              (propertize
+         ;;               " " 'face 'fringe 'display
+         ;;               '(space :width
+         ;;                       (lordar-mode-line-right-fringe-width)))))))
+         )
+    (concat
+     left
+     (propertize
+      " " 'display
+      `(space :align-to
+              (- right-margin
+                 (,right-fringe . right-fringe)
+                 (,right-margin . right-margin)
+                 ,(length right))))
+     right)))
+
+;; (lordar-mode-line-set-mode-line
+;;  '(:left
+;;    ((lordar-mode-line-segments-winum " %s ")
+;;     (lordar-mode-line-segments-evil-state " %s "))
+;;    :right
+;;    ((lordar-mode-line-segments-winum " %s ")
+;;     (lordar-mode-line-segments-evil-state " %s ")
+;;     (lordar-mode-line-segments-winum " %s "))))
+
+
+(defun lordar-mode-line--eval-segments (segments)
+  "Eval the SEGMENTS and concacenate into a string.
+If it is a string propertize it with the default face."
+  (mapconcat
+   (lambda (segment)
+     (if (stringp segment)
+         (propertize segment 'face (lordar-mode-line-segments--get-face))
+       (eval segment)))
+   segments))
 
 ;;;; Minor-mode
 
