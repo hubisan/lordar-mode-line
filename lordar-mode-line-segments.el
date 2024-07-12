@@ -310,8 +310,7 @@ Use FORMAT-STRING to change the output."
 (defvar-local lordar-mode-line-segments--project-root-relative-directory-cache nil
   "Cache the project relative directory.")
 
-(defvar lordar-mode-line-segments--project-root-relative-directory-cache-hooks
-  '(after-save-hook)
+(defvar lordar-mode-line-segments--project-root-relative-directory-cache-hooks nil
   "Buffer local hooks to invalidate cache on.")
 
 (defun lordar-mode-line-segments--project-root-relative-directory-cache-invalidate ()

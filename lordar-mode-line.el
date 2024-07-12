@@ -201,23 +201,20 @@ When SET-DEFAULT is non-nil, set the default segments locally."
       (when (and set-default (not found))
         (lordar-mode-line-set-mode-line)))))
 
-(defun lordar-mode-line--eval-segments (segments)
-  "Eval the SEGMENTS and concacenate into a string.
+(defsubst lordar-mode-line--eval-segment (segment)
+  "Eval the SEGMENT and concacenate into a string.
 If it is a string propertize it with the default face."
-  (mapconcat
-   (lambda (segment)
-     (if (stringp segment)
-         (propertize segment 'face (lordar-mode-line-segments--get-face))
-       (eval segment)))
-   segments))
+  (if (stringp segment)
+      (propertize segment 'face (lordar-mode-line-segments--get-face))
+    (eval segment)))
 
 (defun lordar-mode-line--construct-string (segments)
   "Construct a mode line with SEGMENTS which contains left and right parts.
 The left part is aligned to the left side and the right part to the right."
   (let* ((left (plist-get segments :left))
          (right (plist-get segments :right))
-         (left (when left (lordar-mode-line--eval-segments left)))
-         (right (when right (lordar-mode-line--eval-segments right)))
+         (left (when left (mapconcat #'lordar-mode-line--eval-segment left)))
+         (right (when right (mapconcat #'lordar-mode-line--eval-segment right)))
          (outside fringes-outside-margins)
          (left-margin (if outside 0.0 1.0))
          (right-fringe (if outside -1.0 0.0))
