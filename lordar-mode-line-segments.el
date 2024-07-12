@@ -54,14 +54,12 @@ If the selected window is active, return face with `lordar-mode-line-' as
 prefix. If inactive, return the corresponding FACE with an additional
 `-inactive' suffix. If FACE is nil use the default face."
   (if face
-      (let* ((face (format "lordar-mode-line-%s" (symbol-name face)))
-             (active-face (intern-soft face)))
+      (let* ((face (format "lordar-mode-line-%s" (symbol-name face))))
         (if (mode-line-window-selected-p)
-            (or active-face
+            (or (intern-soft face)
                 (user-error "Face %s doesn't exist" face))
-          (let* ((inactive-face-string (format "%s-inactive" face))
-                 (inactive-face (intern-soft inactive-face-string)))
-            (or inactive-face
+          (let* ((inactive-face-string (format "%s-inactive" face)))
+            (or (intern-soft inactive-face-string)
                 (user-error "Face %s doesn't exist" inactive-face-string)))))
     (if (mode-line-window-selected-p)
         'lordar-mode-line
@@ -77,8 +75,7 @@ the `symbols' suffix. So `buffer-status' for instance gets turned into
                                  (symbol-name symbols)))
          (symbols-alist (symbol-value (intern-soft symbols-string))))
     (if symbols-alist
-        (if (assoc key symbols-alist)
-            (alist-get key symbols-alist)
+        (or (alist-get key symbols-alist)
           (user-error "Symbol %s doesn't exist in %s" key symbols-string))
       (user-error "Symbols alist %s doesn't exist" symbols-string))))
 
@@ -95,8 +92,8 @@ If inactive, set the corresponding FACE with an additional -inactive suffix."
   "Cache for storing mode line segments.")
 
 (defvar lordar-mode-line-segments--invalidation-hooks
-  '(after-save-hook window-configuration-change-hook)
-  "Hooks to invalidate cache on.")
+  '(after-save-hook)
+  "Buffer local hooks to invalidate cache on.")
 
 (defun lordar-mode-line-segments--cache-add-invalidation-hooks ()
   "Add local hooks to invalidate cache."
@@ -330,21 +327,24 @@ Examples:
 Use FORMAT-STRING to change the output."
   (when (lordar-mode-line-segments--project-root-buffer-valid-p)
     ;; Add cache here > if in cache use it else calculate it.
-    (let* ((cache-key 'project-root-relative-directory))
-      (or (lordar-mode-line-segments--cache-get cache-key))
-      (let* ((format-string (or format-string "%s"))
-             (project (project-current))
-             (directory (if project
-                            (let* ((root (project-root project))
-                                   (root-parent (file-name-parent-directory root)))
-                              (file-relative-name default-directory root-parent))
-                          default-directory))
-             (directory (directory-file-name (abbreviate-file-name
-                                              (file-local-name directory))))
-             (directory (format format-string directory))
-             (text (lordar-mode-line-segments--propertize directory
-                                                          'project-directory)))
-        (lordar-mode-line-segments--cache-set cache-key text)))))
+    (let* ((cache-key 'project-root-relative-directory)
+           (cache-value (lordar-mode-line-segments--cache-get cache-key)))
+      (if cache-value
+          (lordar-mode-line-segments--propertize cache-value 'project-directory)
+        (let* ((format-string (or format-string "%s"))
+               (project (project-current))
+               (directory
+                (if project
+                    (let* ((root (project-root project))
+                           (root-parent (file-name-parent-directory root)))
+                      (file-relative-name default-directory root-parent))
+                  default-directory))
+               (directory (directory-file-name (abbreviate-file-name
+                                                (file-local-name directory))))
+               (directory (format format-string directory)))
+          (lordar-mode-line-segments--cache-set cache-key directory)
+          (lordar-mode-line-segments--propertize directory
+                                                 'project-directory))))))
 
 ;;;; Segment Version Control
 
