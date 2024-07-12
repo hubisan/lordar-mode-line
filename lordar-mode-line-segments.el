@@ -89,6 +89,39 @@ If the selected window is active, set face with lordar-mode-line- as prefix.
 If inactive, set the corresponding FACE with an additional -inactive suffix."
   (propertize text 'face (lordar-mode-line-segments--get-face face)))
 
+;;;; Cache
+
+(defvar-local lordar-mode-line-segments--cache nil
+  "Cache for storing mode line segments.")
+
+(defvar lordar-mode-line-segments--invalidation-hooks
+  '(after-save-hook window-configuration-change-hook)
+  "Hooks to invalidate cache on.")
+
+(defun lordar-mode-line-segments--cache-add-invalidation-hooks ()
+  "Add local hooks to invalidate cache."
+  (dolist (hook lordar-mode-line-segments--invalidation-hooks)
+    (add-hook hook #'lordar-mode-line-segments--cache-invalidate nil t)))
+
+(defun lordar-mode-line-segments--cache-invalidate (&optional key)
+  "Invalidate the mode line cache in the current buffer.
+If KEY is provided, invalidate only that key."
+  (if key
+      (setq-local lordar-mode-line-segments--cache
+                  (assq-delete-all key lordar-mode-line-segments--cache))
+    (setq-local lordar-mode-line-segments--cache nil)))
+
+(defun lordar-mode-line-segments--cache-set (key value)
+  "Set KEY to VALUE in the buffer-local mode line cache.
+Local hooks will be added to invaidate the cache if necessary."
+  (prog1
+      (setf (alist-get key lordar-mode-line-segments--cache) value)
+    (lordar-mode-line-segments--cache-add-invalidation-hooks)))
+
+(defun lordar-mode-line-segments--cache-get (key)
+  "Get the value associated with KEY from the buffer-local mode line cache."
+  (alist-get key lordar-mode-line-segments--cache))
+
 ;;;; Segment Adjust Height
 
 (defcustom lordar-mode-line-height-adjust-factor 0.2
@@ -124,7 +157,7 @@ If FACTOR is not give use `lordar-mode-line-height-adjust'."
   "Face used for displaying the major mode in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-vertical-space (&optional width)
+(defsubst lordar-mode-line-segments-vertical-space (&optional width)
   "Vertical space with space-width set to WIDTH.
 If WIDTH is nil set it to 1."
   (let* ((width (or width 1.0)))
@@ -259,6 +292,12 @@ Use FORMAT-STRING to change the output."
   "Face used for displaying buffer status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
+(defvar lordar-mode-line-segments--project-root-basename-cache nil
+  "Cache the project basename")
+
+(defvar lordar-mode-line-segments--project-root-relative-directory-cache nil
+  "Cache the project relative directory.")
+
 (defun lordar-mode-line-segments--project-root-buffer-valid-p  ()
   "Check if the current buffer is a valid project buffer.
 A buffer is considered valid if it is associated with a file or if it is in
@@ -290,20 +329,22 @@ Examples:
   if visiting ~/projects/emacs-never-dies.org
 Use FORMAT-STRING to change the output."
   (when (lordar-mode-line-segments--project-root-buffer-valid-p)
-    (let* ((format-string (or format-string "%s"))
-           (directory (if-let* ((project (project-current))
-                                (root (project-root project))
-                                (root-parent (file-name-parent-directory root))
-                                (relative-dir
-                                 (file-relative-name default-directory
-                                                     root-parent)))
-                          relative-dir
-                        default-directory))
-           (directory (directory-file-name (abbreviate-file-name
-                                            (file-local-name directory))))
-           (directory (format format-string directory)))
-      (lordar-mode-line-segments--propertize directory 'project-directory))))
-
+    ;; Add cache here > if in cache use it else calculate it.
+    (let* ((cache-key 'project-root-relative-directory))
+      (or (lordar-mode-line-segments--cache-get cache-key))
+      (let* ((format-string (or format-string "%s"))
+             (project (project-current))
+             (directory (if project
+                            (let* ((root (project-root project))
+                                   (root-parent (file-name-parent-directory root)))
+                              (file-relative-name default-directory root-parent))
+                          default-directory))
+             (directory (directory-file-name (abbreviate-file-name
+                                              (file-local-name directory))))
+             (directory (format format-string directory))
+             (text (lordar-mode-line-segments--propertize directory
+                                                          'project-directory)))
+        (lordar-mode-line-segments--cache-set cache-key text)))))
 
 ;;;; Segment Version Control
 
@@ -616,7 +657,7 @@ For FORMAT-STRING, SHOW-0 and USE-0-FACES see
   "Face used for displaying buffer status in the mode line."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-evil-state (&optional format-string)
+(defsubst lordar-mode-line-segments-evil-state (&optional format-string)
   "Return the value of `evil-mode-line-tag'.
 Use FORMAT-STRING to change the output."
   (when evil-mode
@@ -637,7 +678,7 @@ Use FORMAT-STRING to change the output."
   "Face used for displaying `winum' number in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-winum (&optional format-string)
+(defsubst lordar-mode-line-segments-winum (&optional format-string)
   "Return the winum number string for the mode line, with optional PADDING.
 If PADDING is provided, it will be added before and after the winum number.
 This function also ensures `winum-auto-setup-mode-line' is disabled.
