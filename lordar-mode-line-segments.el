@@ -54,11 +54,11 @@ If the selected window is active, return face with `lordar-mode-line-' as
 prefix. If inactive, return the corresponding FACE with an additional
 `-inactive' suffix. If FACE is nil use the default face."
   (if face
-      (let* ((face (format "lordar-mode-line-%s" (symbol-name face))))
+      (let* ((face (concat "lordar-mode-line-" (symbol-name face))))
         (if (mode-line-window-selected-p)
             (or (intern-soft face)
                 (user-error "Face %s doesn't exist" face))
-          (let* ((inactive-face-string (format "%s-inactive" face)))
+          (let* ((inactive-face-string (concat face "-inactive")))
             (or (intern-soft inactive-face-string)
                 (user-error "Face %s doesn't exist" inactive-face-string)))))
     (if (mode-line-window-selected-p)
@@ -71,8 +71,8 @@ prefix. If inactive, return the corresponding FACE with an additional
 SYMBOLS is the symbol without the prefix `lordar-mode-line' and without
 the `symbols' suffix. So `buffer-status' for instance gets turned into
 `lordar-mode-line-buffer-status-symbols'."
-  (let* ((symbols-string (format "lordar-mode-line-%s-symbols"
-                                 (symbol-name symbols)))
+  (let* ((symbols-string (concat "lordar-mode-line-" (symbol-name symbols)
+                                "-symbols"))
          (symbols-alist (symbol-value (intern-soft symbols-string))))
     (unless symbols-alist
       (user-error "Symbols alist %s doesn't exist" symbols-string))
@@ -89,36 +89,25 @@ If inactive, set the corresponding FACE with an additional -inactive suffix."
 
 ;;;; Cache
 
-(defvar-local lordar-mode-line-segments--cache nil
-  "Cache for storing mode line segments.")
+(defun lordar-mode-line-segments--cache-add-invalidation-hooks (hooks function)
+  "Add local HOOKS to invalidate cache."
+  (dolist (hook hooks)
+    (add-hook hook function nil t)))
 
-(defvar lordar-mode-line-segments--invalidation-hooks
-  '(after-save-hook)
-  "Buffer local hooks to invalidate cache on.")
-
-(defun lordar-mode-line-segments--cache-add-invalidation-hooks ()
-  "Add local hooks to invalidate cache."
-  (dolist (hook lordar-mode-line-segments--invalidation-hooks)
-    (add-hook hook #'lordar-mode-line-segments--cache-invalidate nil t)))
-
-(defun lordar-mode-line-segments--cache-invalidate (&optional key)
-  "Invalidate the mode line cache in the current buffer.
-If KEY is provided, invalidate only that key."
-  (if key
-      (setq-local lordar-mode-line-segments--cache
-                  (assq-delete-all key lordar-mode-line-segments--cache))
-    (setq-local lordar-mode-line-segments--cache nil)))
-
-(defun lordar-mode-line-segments--cache-set (key value)
+(defun lordar-mode-line-segments--cache-set (name value)
   "Set KEY to VALUE in the buffer-local mode line cache.
 Local hooks will be added to invaidate the cache if necessary."
-  (prog1
-      (setf (alist-get key lordar-mode-line-segments--cache) value)
-    (lordar-mode-line-segments--cache-add-invalidation-hooks)))
-
-(defun lordar-mode-line-segments--cache-get (key)
-  "Get the value associated with KEY from the buffer-local mode line cache."
-  (alist-get key lordar-mode-line-segments--cache))
+  (let* ((name (symbol-name name))
+         (variable (intern-soft
+                    (concat  "lordar-mode-line-segments--" name "-cache")))
+         (hooks (intern-soft
+                 (concat  "lordar-mode-line-segments--" name "-cache-hooks")))
+         (function (intern-soft
+                    (concat  "lordar-mode-line-segments--" name "-cache-invalidate"))))
+    (prog1
+        (set variable value)
+      (lordar-mode-line-segments--cache-add-invalidation-hooks
+       (symbol-value hooks) function))))
 
 ;;;; Segment Adjust Height
 
@@ -290,11 +279,12 @@ Use FORMAT-STRING to change the output."
   "Face used for displaying buffer status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defvar lordar-mode-line-segments--project-root-basename-cache nil
+(defvar-local lordar-mode-line-segments--project-root-basename-cache nil
   "Cache the project basename")
 
-(defvar lordar-mode-line-segments--project-root-relative-directory-cache nil
-  "Cache the project relative directory.")
+(defvar lordar-mode-line-segments--project-root-basename-cache-hooks
+  '()
+  "Buffer local hooks to invalidate cache on.")
 
 (defun lordar-mode-line-segments--project-root-buffer-valid-p  ()
   "Check if the current buffer is a valid project buffer.
@@ -317,6 +307,18 @@ Use FORMAT-STRING to change the output."
            (basename (format format-string basename)))
       (lordar-mode-line-segments--propertize basename 'project-directory))))
 
+(defvar-local lordar-mode-line-segments--project-root-relative-directory-cache nil
+  "Cache the project relative directory.")
+
+(defvar lordar-mode-line-segments--project-root-relative-directory-cache-hooks
+  '(after-save-hook)
+  "Buffer local hooks to invalidate cache on.")
+
+(defun lordar-mode-line-segments--project-root-relative-directory-cache-invalidate ()
+  "docstring"
+  (setq-local lordar-mode-line-segments--project-root-relative-directory-cache
+              nil))
+
 (defun lordar-mode-line-segments-project-root-relative-directory (&optional format-string)
   "Return the directory path relative to the root of the project.
 If not in a project the `default-directory' is returned.
@@ -328,8 +330,8 @@ Examples:
 Use FORMAT-STRING to change the output."
   (when (lordar-mode-line-segments--project-root-buffer-valid-p)
     ;; Add cache here > if in cache use it else calculate it.
-    (let* ((cache-key 'project-root-relative-directory)
-           (cache-value (lordar-mode-line-segments--cache-get cache-key)))
+    (let* ((cache-name 'project-root-relative-directory)
+           (cache-value lordar-mode-line-segments--project-root-relative-directory-cache))
       (if cache-value
           (lordar-mode-line-segments--propertize cache-value 'project-directory)
         (let* ((format-string (or format-string "%s"))
@@ -343,7 +345,7 @@ Use FORMAT-STRING to change the output."
                (directory (directory-file-name (abbreviate-file-name
                                                 (file-local-name directory))))
                (directory (format format-string directory)))
-          (lordar-mode-line-segments--cache-set cache-key directory)
+          (lordar-mode-line-segments--cache-set cache-name directory)
           (lordar-mode-line-segments--propertize directory
                                                  'project-directory))))))
 
