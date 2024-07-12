@@ -201,7 +201,7 @@ When SET-DEFAULT is non-nil, set the default segments locally."
       (when (and set-default (not found))
         (lordar-mode-line-set-mode-line)))))
 
-(defsubst lordar-mode-line--eval-segments (segments)
+(defun lordar-mode-line--eval-segments (segments)
   "Eval the SEGMENTS and concacenate into a string.
 If it is a string propertize it with the default face."
   (mapconcat

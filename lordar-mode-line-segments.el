@@ -47,7 +47,7 @@
 
 ;;;; Segments Auxiliary Functions & Variables
 
-(defsubst lordar-mode-line-segments--get-face (&optional face)
+(defun lordar-mode-line-segments--get-face (&optional face)
   "Return the appropriate face for the symbol FACE.
 
 If the selected window is active, return face with `lordar-mode-line-' as
@@ -65,7 +65,7 @@ prefix. If inactive, return the corresponding FACE with an additional
         'lordar-mode-line
       'lordar-mode-line-inactive)))
 
-(defsubst lordar-mode-line-segments--get-symbol (key symbols)
+(defun lordar-mode-line-segments--get-symbol (key symbols)
   "Return the symbol associated with KEY from SYMBOLS alist.
 
 SYMBOLS is the symbol without the prefix `lordar-mode-line' and without
@@ -74,12 +74,13 @@ the `symbols' suffix. So `buffer-status' for instance gets turned into
   (let* ((symbols-string (format "lordar-mode-line-%s-symbols"
                                  (symbol-name symbols)))
          (symbols-alist (symbol-value (intern-soft symbols-string))))
-    (if symbols-alist
-        (or (alist-get key symbols-alist)
-          (user-error "Symbol %s doesn't exist in %s" key symbols-string))
-      (user-error "Symbols alist %s doesn't exist" symbols-string))))
+    (unless symbols-alist
+      (user-error "Symbols alist %s doesn't exist" symbols-string))
+    (if (assoc key symbols-alist)
+        (alist-get key symbols-alist)
+      (user-error "Symbol %s doesn't exist in %s" key symbols-string))))
 
-(defsubst lordar-mode-line-segments--propertize (text face)
+(defun lordar-mode-line-segments--propertize (text face)
   "Propertize TEXT with the FACE.
 
 If the selected window is active, set face with lordar-mode-line- as prefix.
@@ -154,7 +155,7 @@ If FACTOR is not give use `lordar-mode-line-height-adjust'."
   "Face used for displaying the major mode in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-vertical-space (&optional width)
+(defun lordar-mode-line-segments-vertical-space (&optional width)
   "Vertical space with space-width set to WIDTH.
 If WIDTH is nil set it to 1."
   (let* ((width (or width 1.0)))
@@ -375,7 +376,7 @@ Use FORMAT-STRING to change the output."
               (text (format format-string text)))
     (lordar-mode-line-segments--propertize text 'vc-branch)))
 
-(defsubst lordar-mode-line-segments--vc-branch-get ()
+(defun lordar-mode-line-segments--vc-branch-get ()
   "Return the VC branch name for the current buffer."
   (when (and vc-mode buffer-file-name)
     (when-let* ((backend (vc-backend buffer-file-name)))
@@ -444,7 +445,7 @@ Valid keywords are:"
   "Face used for displaying the VC state in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments--vc-state-get-symbol (&optional state)
+(defun lordar-mode-line-segments--vc-state-get-symbol (&optional state)
   "Return the symbo for the vc STATE."
   (when (and vc-mode buffer-file-name)
     (when-let* ((state (or state (vc-state buffer-file-name)))
@@ -459,7 +460,7 @@ Valid keywords are:"
                               (t 'default))))
       (lordar-mode-line-segments--get-symbol symbol 'vc-state))))
 
-(defsubst lordar-mode-line-segments--vc-state-get ()
+(defun lordar-mode-line-segments--vc-state-get ()
   "Return an indicator representing the status of the current buffer.
 Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
   (when (and vc-mode buffer-file-name)
@@ -467,7 +468,7 @@ Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
                 (symbol (lordar-mode-line-segments--vc-state-get-symbol state)))
       (setq-local lordar-mode-line-segments--vc-state-text symbol))))
 
-(defsubst lordar-mode-line-segments--vc-state-get-face (&optional state)
+(defun lordar-mode-line-segments--vc-state-get-face (&optional state)
   "Return the face symbol for the vc STATE."
   (when (and vc-mode buffer-file-name)
     (when-let* ((state (or state (vc-state buffer-file-name))))
@@ -582,7 +583,7 @@ You can overwrite this behaviour in the functions when needed."
   "Face used for displaying the VC state in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments--syntax-checking-counter (type)
+(defun lordar-mode-line-segments--syntax-checking-counter (type)
   "Return counter for TYPE :error, :warning or :note."
   (cond
    ((bound-and-true-p flymake-mode)
@@ -591,7 +592,7 @@ You can overwrite this behaviour in the functions when needed."
     ;; Not implemented as not using anymore.
     (ignore))))
 
-(defsubst lordar-mode-line-segments--syntax-checking (type &optional format-string
+(defun lordar-mode-line-segments--syntax-checking (type &optional format-string
                                                         show-0 use-0-faces)
   "Returns the number or errors for TYPE formatted for mode line.
 TYPE is :error, :warning or :note. Use FORMAT-STRING to change the output. If
@@ -657,7 +658,7 @@ For FORMAT-STRING, SHOW-0 and USE-0-FACES see
   "Face used for displaying buffer status in the mode line."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-evil-state (&optional format-string)
+(defun lordar-mode-line-segments-evil-state (&optional format-string)
   "Return the value of `evil-mode-line-tag'.
 Use FORMAT-STRING to change the output."
   (when evil-mode
@@ -678,7 +679,7 @@ Use FORMAT-STRING to change the output."
   "Face used for displaying `winum' number in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-winum (&optional format-string)
+(defun lordar-mode-line-segments-winum (&optional format-string)
   "Return the winum number string for the mode line, with optional PADDING.
 If PADDING is provided, it will be added before and after the winum number.
 This function also ensures `winum-auto-setup-mode-line' is disabled.
