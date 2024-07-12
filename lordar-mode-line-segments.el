@@ -45,10 +45,11 @@
   (declare-function winum-get-number-string "ext:winum")
   (declare-function flymake--mode-line-counter "flymake"))
 
-;;;; Helpers
+;;;; Segments Auxiliary Functions & Variables
 
 (defun lordar-mode-line-segments--get-face (&optional face)
   "Return the appropriate face for the symbol FACE.
+
 If the selected window is active, return face with `lordar-mode-line-' as
 prefix. If inactive, return the corresponding FACE with an additional
 `-inactive' suffix. If FACE is nil use the default face."
@@ -68,6 +69,7 @@ prefix. If inactive, return the corresponding FACE with an additional
 
 (defun lordar-mode-line-segments--get-symbol (key symbols)
   "Return the symbol associated with KEY from SYMBOLS alist.
+
 SYMBOLS is the symbol without the prefix `lordar-mode-line' and without
 the `symbols' suffix. So `buffer-status' for instance gets turned into
 `lordar-mode-line-buffer-status-symbols'."
@@ -82,94 +84,12 @@ the `symbols' suffix. So `buffer-status' for instance gets turned into
 
 (defun lordar-mode-line-segments-propertize (text face)
   "Propertize TEXT with the FACE.
-If the selected window is active, set face with `lordar-mode-line-' as prefix.
-If inactive, set the corresponding FACE with an additional `-inactive' suffix."
+
+If the selected window is active, set face with lordar-mode-line- as prefix.
+If inactive, set the corresponding FACE with an additional -inactive suffix."
   (propertize text 'face (lordar-mode-line-segments--get-face face)))
 
-;;;; Right Align
-
-;; Copied from Emacs 30. Want to use my own face though. See:
-;; - `mode-line-format-right-align'.
-;; - `mode--line-format-right-align'
-
-(defcustom lordar-mode-line-right-align-edge 'right-fringe
-  "Where function `lordar-mode-line--format-right-align' should align to.
-Internally, that function uses `:align-to' in a display property,
-so aligns to the left edge of the given area.
-
-Must be set to a symbol.  Acceptable values are:
-- `window': align to extreme right of window, regardless of margins
-  or fringes
-- `right-fringe': align to right-fringe
-- `right-margin': align to right-margin"
-  :type '(choice (const right-margin)
-                 (const right-fringe)
-                 (const window))
-  :group 'lordar-mode-line)
-
-(defface lordar-mode-line-right-align
-  '((t (:inherit lordar-mode-line)))
-  "Face for invisible elements that adjust the mode-line height."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-right-align-inactive
-  '((t (:inherit lordar-mode-line-inactive)))
-  "Face for invisible elements that adjust the mode-line height."
-  :group 'lordar-mode-line-faces)
-
-(defvar lordar-mode-line-segments-right-align
-  '(:eval (lordar-mode-line-segments--right-align))
-  "Mode line construct to right align all following constructs.")
-;;;###autoload
-(put 'lordar-mode-line-segments-right-align 'risky-local-variable t)
-
-(defun lordar-mode-line-segments--right-align ()
-  "Right-align all following mode-line constructs.
-
-When the symbol `lordar-mode-line-segments-right-align' appears in
-`mode-line-format', return a string of one space, with a display
-property to make it appear long enough to align anything after that
-symbol to the right of the rendered mode line. Exactly how far to the
-right is controlled by `lordar-mode-line-right-align-edge'.
-
-It is important that the symbol `lordar-mode-line-segments-right-align' be
-included in `mode-line-format' (and not another similar construct such
-as `(:eval (mode-line-format-right-align)'). This is because the symbol
-`lordar-mode-line-segments-right-align' is processed by `format-mode-line'
-as a variable."
-  (let* ((rest (cdr (memq 'lordar-mode-line-segments-right-align
-                          mode-line-format)))
-         (rest-str (format-mode-line `("" ,@rest)))
-         (rest-width (progn
-                       (add-face-text-property
-                        0 (length rest-str) 'mode-line t rest-str)
-                       (string-pixel-width rest-str)))
-         (face (lordar-mode-line-segments--get-face 'right-align))
-         (align-edge lordar-mode-line-right-align-edge))
-    (propertize " "
-                'face face
-                'display
-                ;; The `right' spec doesn't work on TTY frames
-                ;; when windows are split horizontally (bug#59620)
-                (if (and (display-graphic-p) (not (eq align-edge 'window)))
-                    `(space :align-to (- ,align-edge (,rest-width)))
-                  `(space :align-to
-                          (,(- (window-pixel-width)
-                               (window-scroll-bar-width)
-                               (window-right-divider-width)
-                               (* (or (car (window-margins)) 0)
-                                  (frame-char-width))
-                               ;; Manually account for value of
-                               ;; `lordar-mode-line-right-align-edge' even
-                               ;; when display is non-graphical
-                               (cond ((eq align-edge 'right-margin)
-                                      (or (cdr (window-margins)) 0))
-                                     ((eq align-edge 'right-fringe)
-                                      (or (cadr (window-fringes)) 0))
-                                     (t 0))
-                               rest-width)))))))
-
-;;;; Adjust Height
+;;;; Segment Adjust Height
 
 (defcustom lordar-mode-line-height-adjust-factor 0.2
   "Factor to adjust the height of the mode line by.
@@ -192,7 +112,7 @@ If FACTOR is not give use `lordar-mode-line-height-adjust'."
                              `((space-width 0.01) (raise ,(* -1 factor))))))
     (propertize (concat top bottom) 'face 'lordar-mode-line-height-adjust)))
 
-;;;; Vertical Space
+;;;; Segment Vertical Space
 
 (defface lordar-mode-line-vertical-space
   '((t (:inherit lordar-mode-line)))
@@ -212,7 +132,7 @@ If WIDTH is nil set it to 1."
                 'face (lordar-mode-line-segments--get-face 'vertical-space))))
 
 
-;;;; Major Mode
+;;;; Segment Major Mode
 
 (defface lordar-mode-line-major-mode
   '((t (:inherit lordar-mode-line)))
@@ -231,7 +151,7 @@ Use FORMAT-STRING to change the output."
          (mode-name (format format-string mode-name)))
     (lordar-mode-line-segments-propertize mode-name 'major-mode)))
 
-;;;; Buffer Name
+;;;; Segment Buffer Name
 
 ;; The name of the buffer.
 ;; Example: lordar-mode-line-segments.el
@@ -253,7 +173,7 @@ Use FORMAT-STRING to change the output."
          (buffer-name (format format-string (buffer-name))))
     (lordar-mode-line-segments-propertize buffer-name 'buffer-name)))
 
-;;;; Buffer Status
+;;;; Segment Buffer Status
 
 ;; The status of the buffer can be:
 ;; - not modified,
@@ -326,11 +246,10 @@ Use FORMAT-STRING to change the output."
                 (symbol (lordar-mode-line-segments--get-symbol
                          (car symbol-and-face) 'buffer-status))
                 (symbol (format format-string symbol))
-                (face (lordar-mode-line-segments--get-face
-                       (cadr symbol-and-face))))
-      (propertize symbol 'face face))))
+                (face-symbol (cadr symbol-and-face)))
+      (lordar-mode-line-segments-propertize symbol face-symbol))))
 
-;;;; Project Directory
+;;;; Segment Project Directory
 
 (defface lordar-mode-line-project-directory
   '((t (:inherit lordar-mode-line)))
@@ -387,7 +306,23 @@ Use FORMAT-STRING to change the output."
            (directory (format format-string directory)))
       (lordar-mode-line-segments-propertize directory 'project-directory))))
 
-;;;; Version Control Branch
+
+;;;; Segment Version Control
+
+(defvar-local lordar-mode-line-segments--vc-branch-and-state nil
+  "List with vc branch and vc state symbol.
+This variable is needed to update the mode line branch and state text with
+advices or hooks.")
+
+(defun lordar-mode-line-segments--vc-branch-and-state-update (&rest _args)
+  "Update `lordar-mode-line-segments--vc-branch-and-state'.
+Set vc branch text as car and vc state symbol as cdr."
+  (let* ((vc-branch (lordar-mode-line-segments--vc-branch-get))
+         (vc-state (lordar-mode-line-segments--vc-state-get)))
+    (setq-local lordar-mode-line-segments--vc-branch-and-state
+                (list vc-branch vc-state))))
+
+;;;;; Version Control Branch
 
 (defface lordar-mode-line-vc-branch
   '((t (:inherit lordar-mode-line)))
@@ -400,19 +335,24 @@ Use FORMAT-STRING to change the output."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments-vc-branch (&optional format-string)
-  "Return the VC branch name for the current buffer.
+  "Return the vc branch formatted to display in the mode line.
 Use FORMAT-STRING to change the output."
-  (when (and vc-mode buffer-file-name)
-    (when-let* ((format-string (or format-string "%s"))
-                (backend (vc-backend buffer-file-name))
-                (branch
-                 (cond
-                  ((equal backend 'Git) (substring-no-properties vc-mode 5))
-                  ((equal backend 'Hg) (substring-no-properties vc-mode 4))))
-                (branch (format format-string branch)))
-      (lordar-mode-line-segments-propertize branch 'vc-branch))))
+  (unless lordar-mode-line-segments--vc-branch-and-state
+    (lordar-mode-line-segments--vc-branch-and-state-update))
+  (when-let* ((text (car-safe lordar-mode-line-segments--vc-branch-and-state))
+              (format-string (or format-string "%s"))
+              (text (format format-string text)))
+    (lordar-mode-line-segments-propertize text 'vc-branch)))
 
-;;;; Version Control State
+(defun lordar-mode-line-segments--vc-branch-get ()
+  "Return the VC branch name for the current buffer."
+  (when (and vc-mode buffer-file-name)
+    (when-let* ((backend (vc-backend buffer-file-name)))
+      (cond
+       ((equal backend 'Git) (substring-no-properties vc-mode 5))
+       ((equal backend 'Hg) (substring-no-properties vc-mode 4))))))
+
+;;;;; Version Control State
 
 (defcustom lordar-mode-line-vc-state-symbols
   '((up-to-date . nil)
@@ -475,30 +415,50 @@ Valid keywords are:"
 
 (defun lordar-mode-line-segments-vc-state (&optional format-string)
   "Return an indicator representing the status of the current buffer.
-Uses symbols defined in `lordar-mode-line-buffer-status-symbols'.
 Use FORMAT-STRING to change the output."
-  (when (and vc-mode buffer-file-name)
-    (when-let* ((format-string (or format-string "%s"))
-                (state (vc-state buffer-file-name)))
-      (when-let* ((symbol-and-face
-                   (cond
-                    ((eq state 'up-to-date) '(up-to-date vc-state))
-                    ((eq state 'edited) '(edited vc-state-dirty))
-                    ((eq state 'needs-update) '(needs-update vc-state-dirty))
-                    ((eq state 'needs-merge) '(needs-merge vc-state-dirty))
-                    ((eq state 'added) '(needs-merge vc-state-dirty))
-                    ((eq state 'removed) '(needs-merge vc-state))
-                    ((eq state 'conflict) '(needs-merge vc-state-error))
-                    ((eq state 'ignored) '(needs-merge vc-state))
-                    (t '(default vc-state))))
-                  (symbol (lordar-mode-line-segments--get-symbol
-                           (car symbol-and-face) 'vc-state))
-                  (symbol (format format-string symbol))
-                  (face (lordar-mode-line-segments--get-face
-                         (cadr symbol-and-face))))
-        (propertize symbol 'face face)))))
+  (unless lordar-mode-line-segments--vc-branch-and-state
+    (lordar-mode-line-segments--vc-branch-and-state-update))
+  (when-let* ((text (car-safe
+                     (cdr-safe lordar-mode-line-segments--vc-branch-and-state)))
+              (format-string (or format-string "%s"))
+              (text (format format-string text))
+              (face-symbol (lordar-mode-line-segments--vc-state-get-face)))
+    (lordar-mode-line-segments-propertize text face-symbol)))
 
-;;;; Input Method
+(defun lordar-mode-line-segments--vc-state-get ()
+  "Return an indicator representing the status of the current buffer.
+Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
+  (when (and vc-mode buffer-file-name)
+    (when-let* ((state (vc-state buffer-file-name))
+                (symbol (lordar-mode-line-segments--vc-state-get-symbol state)))
+      (setq-local lordar-mode-line-segments--vc-state-text symbol))))
+
+(defun lordar-mode-line-segments--vc-state-get-symbol (&optional state)
+  "Return the symbo for the vc STATE."
+  (when (and vc-mode buffer-file-name)
+    (when-let* ((state (or state (vc-state buffer-file-name)))
+                (symbol (cond ((eq state 'up-to-date) 'up-to-date)
+                              ((eq state 'edited) 'edited)
+                              ((eq state 'needs-update) 'needs-update)
+                              ((eq state 'needs-merge) 'needs-merge)
+                              ((eq state 'added) 'added)
+                              ((eq state 'removed) 'removed)
+                              ((eq state 'conflict) 'conflict)
+                              ((eq state 'ignored) 'ignored)
+                              (t 'default))))
+      (lordar-mode-line-segments--get-symbol symbol 'vc-state))))
+
+(defun lordar-mode-line-segments--vc-state-get-face (&optional state)
+  "Return the face symbol for the vc STATE."
+  (when (and vc-mode buffer-file-name)
+    (when-let* ((state (or state (vc-state buffer-file-name))))
+      (cond ((memq state '(up-to-date removed ignore)) 'vc-state)
+            ((memq state '(edited needs-update needs-merge added))
+             'vc-state-dirty)
+            ((memq state '(conflict)) 'vc-state-error)
+            (t 'vc-state)))))
+
+;;;; Segment Input Method
 
 (defface lordar-mode-line-input-method
   '((t (:inherit lordar-mode-line)))
@@ -525,7 +485,7 @@ Use FORMAT-STRING to change the output."
               (input-method (format format-string input-method)))
     (lordar-mode-line-segments-propertize input-method 'input-method)))
 
-;;;; Syntax-Checking
+;;;; Segment Syntax-Checking
 
 (defcustom lordar-mode-line-syntax-checking-show-0 nil
   "If nil don't show 0 counters.
@@ -644,7 +604,7 @@ For FORMAT-STRING, SHOW-0 and USE-0-FACES see
   (lordar-mode-line-segments--syntax-checking
    :note format-string show-0 use-0-faces))
 
-;;;; Evil State
+;;;; Segment Evil State
 
 (defface lordar-mode-line-evil-state
   '((t (:inherit lordar-mode-line)))
@@ -665,7 +625,7 @@ Use FORMAT-STRING to change the output."
                 (evil-tag (format format-string evil-tag)))
       (lordar-mode-line-segments-propertize evil-tag 'evil-state))))
 
-;;;; Winum (Window Number)
+;;;; Segment Winum (Window Number)
 
 (defface lordar-mode-line-winum
   '((t (:inherit lordar-mode-line)))
