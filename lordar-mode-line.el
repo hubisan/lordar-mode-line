@@ -201,6 +201,16 @@ When SET-DEFAULT is non-nil, set the default segments locally."
       (when (and set-default (not found))
         (lordar-mode-line-set-mode-line)))))
 
+(defsubst lordar-mode-line--eval-segments (segments)
+  "Eval the SEGMENTS and concacenate into a string.
+If it is a string propertize it with the default face."
+  (mapconcat
+   (lambda (segment)
+     (if (stringp segment)
+         (propertize segment 'face (lordar-mode-line-segments--get-face))
+       (eval segment)))
+   segments))
+
 (defun lordar-mode-line--construct-string (segments)
   "Construct a mode line with SEGMENTS which contains left and right parts.
 The left part is aligned to the left side and the right part to the right."
@@ -221,16 +231,6 @@ The left part is aligned to the left side and the right part to the right."
                               ,(length right)))
                    'face (lordar-mode-line-segments--get-face))))
     (concat left padding right)))
-
-(defun lordar-mode-line--eval-segments (segments)
-  "Eval the SEGMENTS and concacenate into a string.
-If it is a string propertize it with the default face."
-  (mapconcat
-   (lambda (segment)
-     (if (stringp segment)
-         (propertize segment 'face (lordar-mode-line-segments--get-face))
-       (eval segment)))
-   segments))
 
 ;;;; Minor-mode
 

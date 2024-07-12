@@ -82,7 +82,7 @@ the `symbols' suffix. So `buffer-status' for instance gets turned into
           (user-error "Symbol %s doesn't exist in %s" key symbols-string))
       (user-error "Symbols alist %s doesn't exist" symbols-string))))
 
-(defsubst lordar-mode-line-segments-propertize (text face)
+(defsubst lordar-mode-line-segments--propertize (text face)
   "Propertize TEXT with the FACE.
 
 If the selected window is active, set face with lordar-mode-line- as prefix.
@@ -103,7 +103,7 @@ of the affected text."
   "Face for invisible elements that adjust the mode-line height."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-adjust-height (&optional factor)
+(defun lordar-mode-line-segments-adjust-height (&optional factor)
   "Adjust the mode-line height by FACTORE using invisible spaces.
 If FACTOR is not give use `lordar-mode-line-height-adjust'."
   (let* ((factor (or factor lordar-mode-line-height-adjust-factor))
@@ -124,7 +124,7 @@ If FACTOR is not give use `lordar-mode-line-height-adjust'."
   "Face used for displaying the major mode in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-vertical-space (&optional width)
+(defun lordar-mode-line-segments-vertical-space (&optional width)
   "Vertical space with space-width set to WIDTH.
 If WIDTH is nil set it to 1."
   (let* ((width (or width 1.0)))
@@ -143,12 +143,12 @@ If WIDTH is nil set it to 1."
   "Face used for displaying the major mode in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-major-mode (&optional format-string)
+(defun lordar-mode-line-segments-major-mode (&optional format-string)
   "Return the pretty name of the current buffer's major mode.
 Use FORMAT-STRING to change the output."
   (let* ((format-string (or format-string "%s"))
          (mode-name (format format-string mode-name)))
-    (lordar-mode-line-segments-propertize mode-name 'major-mode)))
+    (lordar-mode-line-segments--propertize mode-name 'major-mode)))
 
 ;;;; Segment Buffer Name
 
@@ -165,12 +165,12 @@ Use FORMAT-STRING to change the output."
   "Face used for displaying the buffer name in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-buffer-name (&optional format-string)
+(defun lordar-mode-line-segments-buffer-name (&optional format-string)
   "Return the name of the current buffer.
 Use FORMAT-STRING to change the output."
   (let* ((format-string (or format-string "%s"))
          (buffer-name (format format-string (buffer-name))))
-    (lordar-mode-line-segments-propertize buffer-name 'buffer-name)))
+    (lordar-mode-line-segments--propertize buffer-name 'buffer-name)))
 
 ;;;; Segment Buffer Status
 
@@ -230,8 +230,7 @@ Valid keywords are:
   "Face used for displaying the read-only status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-
-(defsubst lordar-mode-line-segments-buffer-status (&optional format-string)
+(defun lordar-mode-line-segments-buffer-status (&optional format-string)
   "Return an indicator representing the status of the current buffer.
 Uses symbols defined in `lordar-mode-line-buffer-status-symbols'.
 Use FORMAT-STRING to change the output."
@@ -246,7 +245,7 @@ Use FORMAT-STRING to change the output."
                          (car symbol-and-face) 'buffer-status))
                 (symbol (format format-string symbol))
                 (face-symbol (cadr symbol-and-face)))
-      (lordar-mode-line-segments-propertize symbol face-symbol))))
+      (lordar-mode-line-segments--propertize symbol face-symbol))))
 
 ;;;; Segment Project Directory
 
@@ -260,14 +259,14 @@ Use FORMAT-STRING to change the output."
   "Face used for displaying buffer status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments--project-root-buffer-valid-p  ()
+(defun lordar-mode-line-segments--project-root-buffer-valid-p  ()
   "Check if the current buffer is a valid project buffer.
 A buffer is considered valid if it is associated with a file or if it is in
 `dired-mode'."
   (or (buffer-file-name)
       (eq major-mode 'dired-mode)))
 
-(defsubst lordar-mode-line-segments-project-root-basename (&optional format-string)
+(defun lordar-mode-line-segments-project-root-basename (&optional format-string)
   "Return the project root basename.
 If not in a project the basename of `default-directory' is returned.
 Use FORMAT-STRING to change the output."
@@ -279,9 +278,9 @@ Use FORMAT-STRING to change the output."
            (basename (file-name-nondirectory
                       (directory-file-name (file-local-name root))))
            (basename (format format-string basename)))
-      (lordar-mode-line-segments-propertize basename 'project-directory))))
+      (lordar-mode-line-segments--propertize basename 'project-directory))))
 
-(defsubst lordar-mode-line-segments-project-root-relative-directory (&optional format-string)
+(defun lordar-mode-line-segments-project-root-relative-directory (&optional format-string)
   "Return the directory path relative to the root of the project.
 If not in a project the `default-directory' is returned.
 Examples:
@@ -303,7 +302,7 @@ Use FORMAT-STRING to change the output."
            (directory (directory-file-name (abbreviate-file-name
                                             (file-local-name directory))))
            (directory (format format-string directory)))
-      (lordar-mode-line-segments-propertize directory 'project-directory))))
+      (lordar-mode-line-segments--propertize directory 'project-directory))))
 
 
 ;;;; Segment Version Control
@@ -325,7 +324,7 @@ advices or hooks.")
   "Face used for displaying the VC branch name in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-vc-branch (&optional format-string)
+(defun lordar-mode-line-segments-vc-branch (&optional format-string)
   "Return the vc branch formatted to display in the mode line.
 Use FORMAT-STRING to change the output."
   (unless lordar-mode-line-segments--vc-branch-and-state
@@ -333,7 +332,7 @@ Use FORMAT-STRING to change the output."
   (when-let* ((text (car-safe lordar-mode-line-segments--vc-branch-and-state))
               (format-string (or format-string "%s"))
               (text (format format-string text)))
-    (lordar-mode-line-segments-propertize text 'vc-branch)))
+    (lordar-mode-line-segments--propertize text 'vc-branch)))
 
 (defsubst lordar-mode-line-segments--vc-branch-get ()
   "Return the VC branch name for the current buffer."
@@ -437,7 +436,7 @@ Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
             ((memq state '(conflict)) 'vc-state-error)
             (t 'vc-state)))))
 
-(defsubst lordar-mode-line-segments-vc-state (&optional format-string)
+(defun lordar-mode-line-segments-vc-state (&optional format-string)
   "Return an indicator representing the status of the current buffer.
 Use FORMAT-STRING to change the output."
   (unless lordar-mode-line-segments--vc-branch-and-state
@@ -447,7 +446,7 @@ Use FORMAT-STRING to change the output."
               (format-string (or format-string "%s"))
               (text (format format-string text))
               (face-symbol (lordar-mode-line-segments--vc-state-get-face)))
-    (lordar-mode-line-segments-propertize text face-symbol)))
+    (lordar-mode-line-segments--propertize text face-symbol)))
 
 ;;;;; Version Control Update
 
@@ -471,7 +470,7 @@ Set vc branch text as car and vc state symbol as cdr."
   "Face used for displaying the VC state in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-input-method (&optional format-string)
+(defun lordar-mode-line-segments-input-method (&optional format-string)
   "Return the current input method.
 Use FORMAT-STRING to change the output."
   ;; From doom-modeline. Apparently evil adds some advice or so and
@@ -484,7 +483,7 @@ Use FORMAT-STRING to change the output."
                               (nth 3 (assoc default-input-method
                                             input-method-alist)))))
               (input-method (format format-string input-method)))
-    (lordar-mode-line-segments-propertize input-method 'input-method)))
+    (lordar-mode-line-segments--propertize input-method 'input-method)))
 
 ;;;; Segment Syntax-Checking
 
@@ -545,11 +544,11 @@ You can overwrite this behaviour in the functions when needed."
 (defsubst lordar-mode-line-segments--syntax-checking-counter (type)
   "Return counter for TYPE :error, :warning or :note."
   (cond
+   ((bound-and-true-p flymake-mode)
+    (cadadr (flymake--mode-line-counter type)))
    ((bound-and-true-p flycheck-mode)
     ;; Not implemented as not using anymore.
-    (ignore))
-   ((bound-and-true-p flymake-mode)
-    (cadadr (flymake--mode-line-counter type)))))
+    (ignore))))
 
 (defsubst lordar-mode-line-segments--syntax-checking (type &optional format-string
                                                         show-0 use-0-faces)
@@ -573,9 +572,9 @@ then use special faces for 0 count, uses
                            ((eq type :error) 'syntax-checking-error)
                            ((eq type :warning) 'syntax-checking-warning)
                            ((eq type :note) 'syntax-checking-note)))))
-        (lordar-mode-line-segments-propertize text face)))))
+        (lordar-mode-line-segments--propertize text face)))))
 
-(defsubst lordar-mode-line-segments-syntax-checking-error-counter (&optional
+(defun lordar-mode-line-segments-syntax-checking-error-counter (&optional
                                                                 format-string
                                                                 show-0
                                                                 use-0-faces)
@@ -585,7 +584,7 @@ For FORMAT-STRING, SHOW-0 and USE-0-FACES see
   (lordar-mode-line-segments--syntax-checking
    :error format-string show-0 use-0-faces))
 
-(defsubst lordar-mode-line-segments-syntax-checking-warning-counter (&optional
+(defun lordar-mode-line-segments-syntax-checking-warning-counter (&optional
                                                                   format-string
                                                                   show-0
                                                                   use-0-faces)
@@ -595,7 +594,7 @@ For FORMAT-STRING, SHOW-0 and USE-0-FACES see
   (lordar-mode-line-segments--syntax-checking
    :warning format-string show-0 use-0-faces))
 
-(defsubst lordar-mode-line-segments-syntax-checking-note-counter (&optional
+(defun lordar-mode-line-segments-syntax-checking-note-counter (&optional
                                                                format-string
                                                                show-0
                                                                use-0-faces)
@@ -617,14 +616,14 @@ For FORMAT-STRING, SHOW-0 and USE-0-FACES see
   "Face used for displaying buffer status in the mode line."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-evil-state (&optional format-string)
+(defun lordar-mode-line-segments-evil-state (&optional format-string)
   "Return the value of `evil-mode-line-tag'.
 Use FORMAT-STRING to change the output."
   (when evil-mode
     (when-let* ((format-string (or format-string "%s"))
                 (evil-tag (eval evil-mode-line-tag))
                 (evil-tag (format format-string evil-tag)))
-      (lordar-mode-line-segments-propertize evil-tag 'evil-state))))
+      (lordar-mode-line-segments--propertize evil-tag 'evil-state))))
 
 ;;;; Segment Winum (Window Number)
 
@@ -638,7 +637,7 @@ Use FORMAT-STRING to change the output."
   "Face used for displaying `winum' number in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defsubst lordar-mode-line-segments-winum (&optional format-string)
+(defun lordar-mode-line-segments-winum (&optional format-string)
   "Return the winum number string for the mode line, with optional PADDING.
 If PADDING is provided, it will be added before and after the winum number.
 This function also ensures `winum-auto-setup-mode-line' is disabled.
@@ -648,7 +647,7 @@ Use FORMAT-STRING to change the output."
     (when-let* ((format-string (or format-string "%s"))
                 (nr (winum-get-number-string))
                 (nr (format format-string nr) ))
-      (lordar-mode-line-segments-propertize nr 'winum))))
+      (lordar-mode-line-segments--propertize nr 'winum))))
 
 (provide 'lordar-mode-line-segments)
 
