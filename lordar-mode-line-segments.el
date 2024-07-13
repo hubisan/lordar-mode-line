@@ -43,7 +43,9 @@
 
 (eval-when-compile
   (declare-function winum-get-number-string "ext:winum")
-  (declare-function flymake--mode-line-counter "flymake"))
+  (declare-function flymake--mode-line-counter "flymake")
+  (declare-function flymake-diagnostic-type "flymake")
+  (declare-function flymake--severity "flymake"))
 
 ;;;; Segments Auxiliary Functions & Variables
 
@@ -538,14 +540,42 @@ You can overwrite this behaviour in the functions when needed."
   "Face used for displaying the VC state in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
+(defvar-local lordar-mode-line-segments--syntax-checking-counters nil
+  "Store error, warning and note counter.
+This variable is needed to update the mode line with an advice.")
+
+(defun lordar-mode-line-segments--syntax-checking-counters-update (&rest _args)
+  "Update `lordar-mode-line-segments--syntax-checking-counters'."
+  (let* ((errors (lordar-mode-line-segments--syntax-checking-counter
+                         :error))
+         (warnings (lordar-mode-line-segments--syntax-checking-counter
+                           :warning))
+         (notes (lordar-mode-line-segments--syntax-checking-counter
+                           :note)))
+    (setq-local lordar-mode-line-segments--syntax-checking-counters
+                (list errors warnings notes))))
+
 (defun lordar-mode-line-segments--syntax-checking-counter (type)
   "Return counter for TYPE :error, :warning or :note."
   (cond
    ((bound-and-true-p flymake-mode)
-    (cadadr (flymake--mode-line-counter type)))
+    (lordar-mode-line-segments--syntax-checking-flymake-counter type)
+    ;; Not using this as for some reason the cache is not immediately udpated.
+    ;; Using the function instead now.
+    ;; (cadadr (flymake--mode-line-counter type))
+    )
    ((bound-and-true-p flycheck-mode)
     ;; Not implemented as not using anymore.
     (ignore))))
+
+(defun lordar-mode-line-segments--syntax-checking-flymake-counter (type)
+  "Return counter for TYPE :error, :warning or :note for flymake.."
+  (let* ((count 0))
+    (dolist (d (flymake-diagnostics))
+      (when (= (flymake--severity type)
+               (flymake--severity (flymake-diagnostic-type d)))
+        (cl-incf count)))
+    (number-to-string count)))
 
 (defun lordar-mode-line-segments--syntax-checking (type &optional format-string
                                                         show-0 use-0-faces)
@@ -555,7 +585,13 @@ SHOW-0 is non-nil then also show the counter if it is 0, uses
 `lordar-mode-line-syntax-checking-show-0' if not set. If USE-0-FACES is non-nil
 then use special faces for 0 count, uses
 `lordar-mode-line-syntax-checking-use-0-faces' if not set."
-  (when-let ((counter (lordar-mode-line-segments--syntax-checking-counter type)))
+  (unless lordar-mode-line-segments--syntax-checking-counters
+    (lordar-mode-line-segments--syntax-checking-counters-update))
+  (when-let ((counters lordar-mode-line-segments--syntax-checking-counters)
+             (counter (cond
+                       ((eq type :error) (nth 0 counters))
+                       ((eq type :warning) (nth 1 counters))
+                       ((eq type :note) (nth 2 counters)))))
     (let* ((format-string (or format-string "%s"))
            (is-not-0 (> (string-to-number counter) 0))
            (show-0 (or show-0 lordar-mode-line-syntax-checking-show-0))

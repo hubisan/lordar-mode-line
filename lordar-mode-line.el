@@ -40,6 +40,10 @@
 
 (require 'lordar-mode-line-segments)
 
+(eval-when-compile
+  (declare-function flymake--handle-report "flymake")
+  (declare-function flymake-start "flymake"))
+
 ;;;; Customization
 
 ;; Segment's customization variables are defined before each segment.
@@ -176,11 +180,12 @@ The corresponding value must be a variable containing the segments."
     (lordar-mode-line-segments-project-root-basename)
     (lordar-mode-line-segments-project-root-relative-directory)
     (lordar-mode-line-segments-vertical-space)
-    (lordar-mode-line-segments-input-method
-     :hooks (input-method-deactivate-hook)))
+    ;; (lordar-mode-line-segments-input-method
+    ;;  :hooks (input-method-deactivate-hook))
+    )
   "Specification of segments to cache and their invalidation hooks.")
 
-(defun lordar-mode-line-segments--cache-add-invalidation-hooks (segment)
+(defun lordar-mode-line--segments-cache-add-invalidation-hooks (segment)
   "Add local hooks to invalidate the cache for the given SEGMENT."
   (let ((hooks (plist-get
                 (cdr (assq segment lordar-mode-line--segments-cache-specs))
@@ -192,48 +197,36 @@ The corresponding value must be a variable containing the segments."
          (lambda () (lordar-mode-line--segments-cache-invalidate segment))
          nil t)))))
 
-(defun lordar-mode-line-segments--cache-remove-invalidation-hooks (segment)
-  "Remove local hooks that invalidate the cache for the given SEGMENT."
-  (let ((hooks (plist-get
-                (cdr (assq segment lordar-mode-line--segments-cache-specs))
-                :hooks)))
-    (when hooks
-      (dolist (hook hooks)
-        (remove-hook
-         hook
-         (lambda () (lordar-mode-line--segments-cache-invalidate segment))
-         t)))))
-
-(defun lordar-mode-line-remove-cache-hooks ()
+(defun lordar-mode-line--segments-cache-remove-hooks ()
   "Remove all local hooks for cache invalidation."
   (dolist (spec lordar-mode-line--segments-cache-specs)
-    (let ((segment (car spec)))
-      (lordar-mode-line-segments--cache-remove-invalidation-hooks segment))))
+    (let* ((segment (car spec))
+           (hooks (plist-get
+                   (cdr (assq segment lordar-mode-line--segments-cache-specs))
+                   :hooks)))
+      (when hooks
+        (dolist (hook hooks)
+          (remove-hook
+           hook
+           (lambda () (lordar-mode-line--segments-cache-invalidate segment))
+           t))))))
 
 (defun lordar-mode-line--segments-cache-invalidate (segment)
   "Invalidate the cache for the given SEGMENT."
   (setq-local lordar-mode-line--segments-cache
-              (assq-delete-all segment lordar-mode-line--segments-cache))
-  ;; (lordar-mode-line-segments--cache-remove-invalidation-hooks segment)
-  )
+              (assq-delete-all segment lordar-mode-line--segments-cache)))
 
-(defun lordar-mode-line-segments--cache-key (segment)
-  "Generate a cache key for the given SEGMENT."
-  (if (listp segment)
-      (car segment)
-    segment))
-
-(defun lordar-mode-line-segments--cache-set (segment value)
+(defun lordar-mode-line--segments-cache-set (segment value)
   "Set the SEGMENT to VALUE in the buffer-local mode line cache.
 Local hooks will be added to invalidate the cache if necessary."
-  (let ((key (lordar-mode-line-segments--cache-key segment)))
+  (let ((key (or (and (listp segment) (car segment)) segment)))
     (when (assoc key lordar-mode-line--segments-cache-specs)
       (setf (alist-get key lordar-mode-line--segments-cache) value)
-      (lordar-mode-line-segments--cache-add-invalidation-hooks key))))
+      (lordar-mode-line--segments-cache-add-invalidation-hooks key))))
 
-(defun lordar-mode-line-segments--cache-get (segment)
+(defun lordar-mode-line--segments-cache-get (segment)
   "Get the value associated with SEGMENT from the buffer-local mode line cache."
-  (let ((key (lordar-mode-line-segments--cache-key segment)))
+  (let ((key (or (and (listp segment) (car segment)) segment)))
     (alist-get key lordar-mode-line--segments-cache)))
 
 ;;;; Set Modeline
@@ -277,7 +270,7 @@ When SET-DEFAULT is non-nil, set the default segments locally."
 If it is a string, propertize it with the default face."
   (if (stringp segment)
       (propertize segment 'face (lordar-mode-line-segments--get-face))
-    (let ((cached-value (lordar-mode-line-segments--cache-get segment)))
+    (let ((cached-value (lordar-mode-line--segments-cache-get segment)))
       (if cached-value
           (let ((face (get-text-property 0 'face cached-value)))
             (when face
@@ -289,7 +282,7 @@ If it is a string, propertize it with the default face."
             (propertize cached-value 'face
                         (lordar-mode-line-segments--get-face face)))
         (let ((value (eval segment)))
-          (lordar-mode-line-segments--cache-set segment value)
+          (lordar-mode-line--segments-cache-set segment value)
           value)))))
 
 (defun lordar-mode-line--construct-string (segments)
@@ -334,6 +327,10 @@ The left part is aligned to the left side and the right part to the right."
       (lordar-mode-line--set-major-mode-specific t)))
   (advice-add 'vc-refresh-state :after
               #'lordar-mode-line-segments--vc-branch-and-state-update)
+  (advice-add #'flymake--handle-report :after
+              #'lordar-mode-line-segments--syntax-checking-counters-update)
+  (advice-add #'flymake-start :after
+            #'lordar-mode-line-segments--syntax-checking-counters-update)
   ;; change-major-mode-hook is called too often, using find file hook instead.
   ;; If you change the major mode in a buffer the mode line will not be changed.
   ;; But this happens rarely.
@@ -344,6 +341,10 @@ The left part is aligned to the left side and the right part to the right."
   "Deactivate the lordar-mode-line."
   (advice-remove 'vc-refresh-state
                  #'lordar-mode-line-segments--vc-branch-and-state-update)
+  (advice-remove #'flymake--handle-report
+                 #'lordar-mode-line-segments--syntax-checking-counters-update)
+  (advice-remove #'flymake-start
+            #'lordar-mode-line-segments--syntax-checking-counters-update)
   (remove-hook 'find-file-hook
                #'lordar-mode-line--set-major-mode-specific)
   ;; Restore the old mode-line-format.
@@ -351,7 +352,8 @@ The left part is aligned to the left side and the right part to the right."
     (setq-default mode-line-format original-value)
     (dolist (buffer (buffer-list))
       (with-current-buffer buffer
-        (setq mode-line-format original-value)))))
+        (setq mode-line-format original-value)
+        (lordar-mode-line--segments-cache-remove-hooks)))))
 
 (provide 'lordar-mode-line)
 
