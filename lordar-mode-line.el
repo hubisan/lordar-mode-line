@@ -171,7 +171,7 @@ The corresponding value must be a variable containing the segments."
 
 ;;;; Cache
 
-(defvar-local lordar-mode-line--segments-cache nil
+(defvar-local lordar-mode-line--segments-cache (make-hash-table :test 'equal)
   "Cache for storing mode line segments.")
 
 (defvar lordar-mode-line--segments-cache-specs
@@ -213,21 +213,20 @@ The corresponding value must be a variable containing the segments."
 
 (defun lordar-mode-line--segments-cache-invalidate (segment)
   "Invalidate the cache for the given SEGMENT."
-  (setq-local lordar-mode-line--segments-cache
-              (assq-delete-all segment lordar-mode-line--segments-cache)))
+  (remhash segment lordar-mode-line--segments-cache))
 
 (defun lordar-mode-line--segments-cache-set (segment value)
   "Set the SEGMENT to VALUE in the buffer-local mode line cache.
 Local hooks will be added to invalidate the cache if necessary."
   (let ((key (or (and (listp segment) (car segment)) segment)))
     (when (assoc key lordar-mode-line--segments-cache-specs)
-      (setf (alist-get key lordar-mode-line--segments-cache) value)
+      (puthash key value lordar-mode-line--segments-cache)
       (lordar-mode-line--segments-cache-add-invalidation-hooks key))))
 
 (defun lordar-mode-line--segments-cache-get (segment)
   "Get the value associated with SEGMENT from the buffer-local mode line cache."
   (let ((key (or (and (listp segment) (car segment)) segment)))
-    (alist-get key lordar-mode-line--segments-cache)))
+    (gethash key lordar-mode-line--segments-cache)))
 
 ;;;; Set Modeline
 
