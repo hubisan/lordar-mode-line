@@ -588,13 +588,12 @@ This variable is needed to update the mode line with an advice.")
 
 (defun lordar-mode-line-segments--syntax-checking-flymake-counter (type)
   "Return counter for TYPE :error, :warning or :note for flymake.."
-  (when (bound-and-true-p flymake-mode)
-    (let* ((count 0))
-      (dolist (d (flymake-diagnostics))
-        (when (= (flymake--severity type)
-                 (flymake--severity (flymake-diagnostic-type d)))
-          (cl-incf count)))
-      (number-to-string count))))
+  (let* ((count 0))
+    (dolist (d (flymake-diagnostics))
+      (when (= (flymake--severity type)
+               (flymake--severity (flymake-diagnostic-type d)))
+        (cl-incf count)))
+    (number-to-string count)))
 
 (defun lordar-mode-line-segments--syntax-checking (type &optional format-string
                                                         show-0 use-0-faces)
