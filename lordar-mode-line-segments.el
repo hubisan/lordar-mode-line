@@ -51,15 +51,14 @@
 
 (defvar lordar-mode-line-segments--face-cache (make-hash-table :test 'equal)
   "Cache for concatenated face names.
-This functions gets called a lot and this avoids calling `intern-soft' all the
+This function gets called frequently and this avoids calling `intern-soft' each
 time.")
 
 (defun lordar-mode-line-segments--get-face (&optional face)
   "Return the appropriate face for the symbol FACE.
-
-If the selected window is active, return face with `lordar-mode-line-' as
-prefix. If inactive, return the corresponding FACE with an additional
-`-inactive' suffix. If FACE is nil use the default face."
+If the selected window is active, return FACE with lordar-mode-line- as prefix.
+If inactive, return the corresponding FACE with an additional -inactive suffix.
+If FACE is nil, use the default face."
   (if face
       (let* ((active (mode-line-window-selected-p))
              (cache-key (concat (symbol-name face) (if active "" "-inactive")))
@@ -76,10 +75,9 @@ prefix. If inactive, return the corresponding FACE with an additional
 
 (defun lordar-mode-line-segments--get-symbol (key symbols)
   "Return the symbol associated with KEY from SYMBOLS alist.
-
-SYMBOLS is the symbol without the prefix `lordar-mode-line' and without
-the `symbols' suffix. So `buffer-status' for instance gets turned into
-`lordar-mode-line-buffer-status-symbols'."
+SYMBOLS is the symbol without the prefix lordar-mode-line and without
+the symbols suffix. For instance, buffer-status gets turned into
+lordar-mode-line-buffer-status-symbols."
   (let* ((symbols-string (concat "lordar-mode-line-" (symbol-name symbols)
                                  "-symbols"))
          (symbols-alist (symbol-value (intern-soft symbols-string))))
@@ -91,27 +89,28 @@ the `symbols' suffix. So `buffer-status' for instance gets turned into
 
 (defun lordar-mode-line-segments--propertize (text face)
   "Propertize TEXT with the FACE.
-If the selected window is active, set face with lordar-mode-line- as prefix.
+If the selected window is active, set FACE with lordar-mode-line- as prefix.
 If inactive, set the corresponding FACE with an additional -inactive suffix."
   (propertize text 'face (lordar-mode-line-segments--get-face face)))
 
 ;;;; Segment Adjust Height
 
 (defcustom lordar-mode-line-height-adjust-factor 0.2
-  "Factor to adjust the height of the mode line by.
-The factor must be a number, which is interpreted as a multiple of the height
-of the affected text."
+  "Default factor to adjust the height of the mode line by.
+The factor must be a decimal number, which is interpreted as a multiple of the
+height of the affected text. And it is added once at the bottom and once at the
+top. Just play around with it until it matches what you like."
   :group 'lordar-mode-line
   :type 'number)
 
 (defface lordar-mode-line-height-adjust
   '((t (:foreground unspecified :background unspecified)))
-  "Face for invisible elements that adjust the mode-line height."
+  "Face for invisible elements that adjust the mode line height."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments-adjust-height (&optional factor)
-  "Adjust the mode-line height by FACTORE using invisible spaces.
-If FACTOR is not give use `lordar-mode-line-height-adjust'."
+  "Adjust the mode-line height by FACTOR using invisible spaces.
+If FACTOR is not given, use `lordar-mode-line-height-adjust-factor'."
   (let* ((factor (or factor lordar-mode-line-height-adjust-factor))
          (top (propertize " " 'display `((space-width 0.01) (raise ,factor))))
          (bottom (propertize " " 'display
@@ -122,17 +121,17 @@ If FACTOR is not give use `lordar-mode-line-height-adjust'."
 
 (defface lordar-mode-line-vertical-space
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying the major mode in the mode line."
+  "Face used to display vertical space in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-vertical-space-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the major mode in the mode line when inactive."
+  "Face used to display vertical space in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments-vertical-space (&optional width)
   "Vertical space with space-width set to WIDTH.
-If WIDTH is nil set it to 1."
+If WIDTH is nil, set it to 1."
   (let* ((width (or width 1.0)))
     (propertize " " 'display `((space-width ,width))
                 'face (lordar-mode-line-segments--get-face 'vertical-space))))
@@ -141,17 +140,17 @@ If WIDTH is nil set it to 1."
 
 (defface lordar-mode-line-major-mode
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying the major mode in the mode line."
+  "Face used to display the major mode in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-major-mode-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the major mode in the mode line when inactive."
+  "Face used to display the major mode in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments-major-mode (&optional format-string)
   "Return the pretty name of the current buffer's major mode.
-Use FORMAT-STRING to change the output."
+Use FORMAT-STRING to change the output format."
   (let* ((mode-name (format-mode-line mode-name))
          (mode-name-formatted (if format-string
                                   (format format-string mode-name)
@@ -165,12 +164,12 @@ Use FORMAT-STRING to change the output."
 
 (defface lordar-mode-line-buffer-name
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying the buffer name in the mode line when active."
+  "Face used to display the buffer name in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-name-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the buffer name in the mode line when inactive."
+  "Face used to display the buffer name in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments-buffer-name (&optional format-string)
@@ -183,13 +182,6 @@ Use FORMAT-STRING to change the output."
     (lordar-mode-line-segments--propertize buffer-name-formatted 'buffer-name)))
 
 ;;;; Segment Buffer Status
-
-;; The status of the buffer can be:
-;; - not modified,
-;; - modified, or
-;; - read-only.
-;; The text returned per status is defined in the alist
-;; `lordar-mode-line-buffer-status-symbols'.
 
 (defcustom lordar-mode-line-buffer-status-symbols
   '((buffer-not-modified . nil)
@@ -212,38 +204,38 @@ Valid keywords are:
 
 (defface lordar-mode-line-buffer-status
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying buffer status in the mode line."
+  "Face used to display buffer status in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-status-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying buffer status in the mode line when inactive."
+  "Face used to display buffer status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-status-modified
   '((t (:inherit lordar-mode-line-error)))
-  "Face used for displaying the modified status in the mode line."
+  "Face used to display the modified status in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-status-modified-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the modified status in the mode line when inactive."
+  "Face used to display the modified status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-status-read-only
   '((t (:inherit lordar-mode-line-warning)))
-  "Face used for displaying the read-only status in the mode line."
+  "Face used to display the read-only status in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-status-read-only-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the read-only status in the mode line when inactive."
+  "Face used to display the read-only status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments-buffer-status (&optional format-string)
   "Return an indicator representing the status of the current buffer.
 Uses symbols defined in `lordar-mode-line-buffer-status-symbols'.
-Use FORMAT-STRING to change the output."
+Use FORMAT-STRING to change the output format."
   (when (buffer-file-name (buffer-base-buffer))
     (when-let* ((symbol-and-face
                  (cond
@@ -262,12 +254,12 @@ Use FORMAT-STRING to change the output."
 
 (defface lordar-mode-line-project-directory
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying buffer status in the mode line."
+  "Face used to display project directory in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-project-directory-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying buffer status in the mode line when inactive."
+  "Face used to display project directory in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments--project-root-buffer-valid-p  ()
@@ -295,13 +287,13 @@ Use FORMAT-STRING to change the output."
 
 (defun lordar-mode-line-segments-project-root-relative-directory (&optional format-string)
   "Return the directory path relative to the root of the project.
-If not in a project the `default-directory' is returned.
+If not in a project, the `default-directory' is returned.
 Examples:
-- With project at ~/.emacs.test the function returns .emacs.test/modules
+- With project at ~/.emacs.test, this function returns .emacs.test/modules
   if visiting ~/.emacs.test/modules/lang-elisp.el.
-- With no project the function returns ~/projects
-  if visiting ~/projects/emacs-never-dies.org
-Use FORMAT-STRING to change the output."
+- With no project, this function returns ~/projects
+  if visiting ~/projects/emacs-never-dies.org.
+Use FORMAT-STRING to change the output format."
   (when (lordar-mode-line-segments--project-root-buffer-valid-p)
     (let* ((project (project-current))
            (directory
@@ -329,12 +321,12 @@ advices or hooks.")
 
 (defface lordar-mode-line-vc-branch
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying the VC branch name in the mode line."
+  "Face used to display the vc branch name in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-vc-branch-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the VC branch name in the mode line when inactive."
+  "Face used to display the vc branch name in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments-vc-branch (&optional format-string)
@@ -349,7 +341,7 @@ Use FORMAT-STRING to change the output."
     (lordar-mode-line-segments--propertize branch-formatted 'vc-branch)))
 
 (defun lordar-mode-line-segments--vc-branch-get ()
-  "Return the VC branch name for the current buffer."
+  "Return the vc branch name for the current buffer."
   (when (and vc-mode buffer-file-name)
     (when-let* ((backend (vc-backend buffer-file-name)))
       (cond
@@ -382,39 +374,49 @@ Valid keywords are:"
   :group 'lordar-mode-line
   :type '(alist :tag "String"
                 :key-type
-                (choice (const :tag "Buffer not modified" buffer-not-modified)
-                        (const :tag "Buffer modified" buffer-modified)
-                        (const :tag "Buffer read-only" buffer-read-only))
+                (choice (const :tag "Up-to-date" up-to-date)
+                        (const :tag "Edited" edited)
+                        (const :tag "Needs update" needs-update)
+                        (const :tag "Needs merge" needs-merge)
+                        (const :tag "Added" added)
+                        (const :tag "Removed" removed)
+                        (const :tag "Conflict" conflict)
+                        (const :tag "Ignored" ignored)
+                        (const :tag "Default" default))
                 :value-type (string :tag "String to use")))
 
 (defface lordar-mode-line-vc-state
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying the VC state in the mode line."
+  "Face used to display the vc state in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-vc-state-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the VC state in the mode line when inactive."
+  "Face used to display the vc state in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-vc-state-dirty
   '((t (:inherit lordar-mode-line-warning)))
-  "Face used for displaying the VC state in the mode line."
+  "Face used to display a dirty vc state in the mode line.
+This is used for edited, needs-update, needs-merge and added."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-vc-state-dirty-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the VC state in the mode line when inactive."
+  "Face used to display dirty vc state in the mode line when inactive.
+This is used for edited, needs-update, needs-merge and added."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-vc-state-error
   '((t (:inherit lordar-mode-line-error)))
-  "Face used for displaying the VC state in the mode line."
+  "Face used to display error vc state in the mode line.
+This is used for conflicts."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-vc-state-error-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the VC state in the mode line when inactive."
+  "Face used to display error vc state in the mode line when inactive.
+This is used for conflicts."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments--vc-state-get-symbol (&optional state)
@@ -477,12 +479,12 @@ Set vc branch text as car and vc state symbol as cdr."
 
 (defface lordar-mode-line-input-method
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying the VC state in the mode line."
+  "Face used to display the input method in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-input-method-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the VC state in the mode line when inactive."
+  "Face used to display the input method in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments-input-method (&optional format-string)
@@ -504,63 +506,62 @@ Use FORMAT-STRING to change the output."
 
 ;;;; Segment Syntax-Checking
 
-(defcustom lordar-mode-line-syntax-checking-show-0 nil
-  "If nil don't show 0 counters.
-You can overwrite this behaviour in the functions when needed."
+(defcustom lordar-mode-line-syntax-checking-show-zero-counter nil
+  "If nil don't show zero counters.
+You can overwrite this behaviour also in each counters functions."
   :group 'lordar-mode-line
   :type 'boolean)
 
-(defcustom lordar-mode-line-syntax-checking-use-0-faces t
-  "When non-nil use special faces if a counter is 0.
-Uses faces `lordar-mode-line-syntax-checking-0-counter' and
-`lordar-mode-line-syntax-checking-0-counter-inactive'.
-You can overwrite this behaviour in the functions when needed."
+(defcustom lordar-mode-line-syntax-checking-use-zero-faces t
+  "When non-nil use special faces if a counter is zero.
+Uses faces `lordar-mode-line-syntax-checking-zero-counter' and
+`lordar-mode-line-syntax-checking-zero-counter-inactive'.
+You can overwrite this behaviour also in each counters functions."
   :group 'lordar-mode-line
   :type 'boolean)
 
 (defface lordar-mode-line-syntax-checking-error
   '((t (:inherit lordar-mode-line-error)))
-  "Face used for displaying the VC state in the mode line."
+  "Face used to display syntax-checking errors in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-syntax-checking-error-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the VC state in the mode line when inactive."
+  "Face used to display syntax-checking errors in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-syntax-checking-warning
   '((t (:inherit lordar-mode-line-warning)))
-  "Face used for displaying the VC state in the mode line."
+  "Face used to display syntax-checking warnings in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-syntax-checking-warning-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the VC state in the mode line when inactive."
+  "Face used to display syntax-checking warnings in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-syntax-checking-note
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying the VC state in the mode line."
+  "Face used to display syntax-checking notes in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-syntax-checking-note-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the VC state in the mode line when inactive."
+  "Face used to display syntax-checking notes in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-syntax-checking-0-counter
+(defface lordar-mode-line-syntax-checking-zero-counter
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying the VC state in the mode line."
+  "Face used to display zero counters in the mode line."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-syntax-checking-0-counter-inactive
+(defface lordar-mode-line-syntax-checking-zero-counter-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying the VC state in the mode line when inactive."
+  "Face used to display zero counters in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defvar-local lordar-mode-line-segments--syntax-checking-counters nil
-  "Store error, warning and note counter.
-This variable is needed to update the mode line with an advice.")
+  "Store error, warning and note counter.")
 
 (defun lordar-mode-line-segments--syntax-checking-counters-update (&rest _args)
   "Update `lordar-mode-line-segments--syntax-checking-counters'."
@@ -578,8 +579,8 @@ This variable is needed to update the mode line with an advice.")
   (cond
    ((bound-and-true-p flymake-mode)
     (lordar-mode-line-segments--syntax-checking-flymake-counter type)
-    ;; Not using this as for some reason the cache is not immediately udpated.
-    ;; Using the function instead now.
+    ;; Not using the following as for some reason the cache is not immediately
+    ;; udpated. Using a function instead now.
     ;; (cadadr (flymake--mode-line-counter type))
     )
    ((bound-and-true-p flycheck-mode)
@@ -596,13 +597,13 @@ This variable is needed to update the mode line with an advice.")
     (number-to-string count)))
 
 (defun lordar-mode-line-segments--syntax-checking (type &optional format-string
-                                                        show-0 use-0-faces)
+                                                        show-zero use-zero-faces)
   "Returns the number or errors for TYPE formatted for mode line.
-TYPE is :error, :warning or :note. Use FORMAT-STRING to change the output. If
-SHOW-0 is non-nil then also show the counter if it is 0, uses
-`lordar-mode-line-syntax-checking-show-0' if not set. If USE-0-FACES is non-nil
-then use special faces for 0 count, uses
-`lordar-mode-line-syntax-checking-use-0-faces' if not set."
+TYPE is :error, :warning or :note. Use FORMAT-STRING to change the
+output. If SHOW-ZERO is non-nil then also show the counter if it is
+zero, uses `lordar-mode-line-syntax-checking-show-zero-counter' if not
+set. If USE-ZERO-FACES is non-nil then use special faces for zero count,
+uses `lordar-mode-line-syntax-checking-use-zero-faces' if not set."
   (unless lordar-mode-line-segments--syntax-checking-counters
     (lordar-mode-line-segments--syntax-checking-counters-update))
   (when-let ((counters lordar-mode-line-segments--syntax-checking-counters)
@@ -611,15 +612,16 @@ then use special faces for 0 count, uses
                        ((eq type :warning) (nth 1 counters))
                        ((eq type :note) (nth 2 counters)))))
     (let* ((is-not-0 (> (string-to-number counter) 0))
-           (show-0 (or show-0 lordar-mode-line-syntax-checking-show-0))
-           (use-0-faces (or use-0-faces
-                            lordar-mode-line-syntax-checking-use-0-faces)))
+           (show-zero (or show-zero
+                          lordar-mode-line-syntax-checking-show-zero-counter))
+           (use-zero-faces (or use-zero-faces
+                               lordar-mode-line-syntax-checking-use-zero-faces)))
       (when-let* ((counter-formatted
-                   (when (or is-not-0 show-0)
+                   (when (or is-not-0 show-zero)
                      (if format-string
                          (format format-string counter)
                        counter)))
-                  (face (if (and (not is-not-0) use-0-faces)
+                  (face (if (and (not is-not-0) use-zero-faces)
                             'syntax-checking-0-counter
                           (cond
                            ((eq type :error) 'syntax-checking-error)
@@ -629,44 +631,44 @@ then use special faces for 0 count, uses
 
 (defun lordar-mode-line-segments-syntax-checking-error-counter (&optional
                                                                 format-string
-                                                                show-0
-                                                                use-0-faces)
-  "Return the error counter report by enabled syntax checker.
-For FORMAT-STRING, SHOW-0 and USE-0-FACES see
+                                                                show-zero
+                                                                use-zero-faces)
+  "Return the errors counter report by enabled syntax checker.
+For FORMAT-STRING, SHOW-ZERO and USE-ZERO-FACES see
 `lordar-mode-line-segments--syntax-checking'."
   (lordar-mode-line-segments--syntax-checking
-   :error format-string show-0 use-0-faces))
+   :error format-string show-zero use-zero-faces))
 
 (defun lordar-mode-line-segments-syntax-checking-warning-counter (&optional
                                                                   format-string
-                                                                  show-0
-                                                                  use-0-faces)
-  "Return the error counter report by enabled syntax checker.
-For FORMAT-STRING, SHOW-0 and USE-0-FACES see
+                                                                  show-zero
+                                                                  use-zero-faces)
+  "Return the warnings counter report by enabled syntax checker.
+For FORMAT-STRING, SHOW-ZERO and USE-ZERO-FACES see
 `lordar-mode-line-segments--syntax-checking'."
   (lordar-mode-line-segments--syntax-checking
-   :warning format-string show-0 use-0-faces))
+   :warning format-string show-zero use-zero-faces))
 
 (defun lordar-mode-line-segments-syntax-checking-note-counter (&optional
                                                                format-string
-                                                               show-0
-                                                               use-0-faces)
-  "Return the error counter report by enabled syntax checker.
-For FORMAT-STRING, SHOW-0 and USE-0-FACES see
+                                                               show-zero
+                                                               use-zero-faces)
+  "Return the notes counter report by enabled syntax checker.
+For FORMAT-STRING, SHOW-ZERO and USE-ZERO-FACES see
 `lordar-mode-line-segments--syntax-checking'."
   (lordar-mode-line-segments--syntax-checking
-   :note format-string show-0 use-0-faces))
+   :note format-string show-zero use-zero-faces))
 
 ;;;; Segment Evil State
 
 (defface lordar-mode-line-evil-state
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying buffer status in the mode line."
+  "Face used to display buffer status in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-evil-state-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying buffer status in the mode line."
+  "Face used to display buffer status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments-evil-state (&optional format-string)
@@ -683,18 +685,16 @@ Use FORMAT-STRING to change the output."
 
 (defface lordar-mode-line-winum
   '((t (:inherit lordar-mode-line)))
-  "Face used for displaying `winum' number in the mode line."
+  "Face used to display `winum' number in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-winum-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used for displaying `winum' number in the mode line when inactive."
+  "Face used to display `winum' number in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
 (defun lordar-mode-line-segments-winum (&optional format-string)
-  "Return the winum number string for the mode line, with optional PADDING.
-If PADDING is provided, it will be added before and after the winum number.
-This function also ensures `winum-auto-setup-mode-line' is disabled.
+  "Return the winum number string for the mode line.
 Use FORMAT-STRING to change the output."
   (setq winum-auto-setup-mode-line nil)
   (when winum-mode

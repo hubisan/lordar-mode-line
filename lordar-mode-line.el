@@ -329,7 +329,7 @@ The left part is aligned to the left side and the right part to the right."
   (advice-add #'flymake--handle-report :after
               #'lordar-mode-line-segments--syntax-checking-counters-update)
   (advice-add #'flymake-start :after
-            #'lordar-mode-line-segments--syntax-checking-counters-update)
+              #'lordar-mode-line-segments--syntax-checking-counters-update)
   ;; change-major-mode-hook is called too often, using find file hook instead.
   ;; If you change the major mode in a buffer the mode line will not be changed.
   ;; But this happens rarely.
@@ -343,7 +343,7 @@ The left part is aligned to the left side and the right part to the right."
   (advice-remove #'flymake--handle-report
                  #'lordar-mode-line-segments--syntax-checking-counters-update)
   (advice-remove #'flymake-start
-            #'lordar-mode-line-segments--syntax-checking-counters-update)
+                 #'lordar-mode-line-segments--syntax-checking-counters-update)
   (remove-hook 'find-file-hook
                #'lordar-mode-line--set-major-mode-specific)
   ;; Restore the old mode-line-format.
