@@ -555,14 +555,9 @@ Use FORMAT-STRING to change the output."
   "Face used to display the input method in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defvar-local lordar-mode-line-segments--input-method nil
-  "Cache for input method.")
-
-(defun lordar-mode-line-segments--input-method-update (&optional format-string)
+(defun lordar-mode-line-segments-input-method (&optional format-string)
   "Return the current input method.
 Use FORMAT-STRING to change the output."
-  ;; From doom-modeline. Apparently evil adds some advice or so and
-  ;; if evil is used `current-input-method' cannot be used.
   (when-let* ((input-method (cond
                              (current-input-method current-input-method-title)
                              ((and (bound-and-true-p evil-local-mode)
@@ -572,17 +567,8 @@ Use FORMAT-STRING to change the output."
               (input-method-formatted (if format-string
                                           (format format-string input-method)
                                         input-method)))
-    (setq lordar-mode-line-segments--input-method input-method-formatted)))
-
-(defun lordar-mode-line-segments-input-method (&optional format-string)
-  "Return the current input method.
-Use FORMAT-STRING to change the output."
-  (unless lordar-mode-line-segments--input-method
-    (lordar-mode-line-segments--input-method-update format-string))
-  (when lordar-mode-line-segments--input-method
-    (lordar-mode-line-segments--propertize
-     lordar-mode-line-segments--input-method
-     'input-method)))
+    (lordar-mode-line-segments--propertize input-method-formatted
+                                           'input-method)))
 
 ;;;; Segment Syntax-Checking
 
