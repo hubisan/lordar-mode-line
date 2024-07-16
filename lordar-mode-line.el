@@ -345,7 +345,7 @@ When REMOVE is non-nil remove the advices else add the advices."
   ;; Change mode line in active buffers.
   (dolist (buffer (buffer-list))
     (with-current-buffer buffer
-      (lordar-mode-line--set-major-mode-specific t)))
+      (lordar-mode-line--set-major-mode-specific)))
   (lordar-mode-line--setup-hooks)
   (lordar-mode-line--setup-advices))
 
