@@ -259,7 +259,7 @@ Valid keywords are:
 (defvar lordar-mode-line-segments--buffer-status nil
   "Cache buffer status.")
 
-(defun lordar-mode-line-segments--buffer-status (&optional format-string)
+(defun lordar-mode-line-segments-buffer-status (&optional format-string)
   "Return an indicator representing the status of the current buffer.
 Uses symbols defined in `lordar-mode-line-buffer-status-symbols'.
 Use FORMAT-STRING to change the output format."
