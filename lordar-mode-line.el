@@ -170,8 +170,8 @@ The corresponding value must be a variable containing the segments."
   "Cache for storing mode line segments.")
 
 (defvar lordar-mode-line--segments-cache-specs
-  '((lordar-mode-line-segments-buffer-name)
-    (lordar-mode-line-segments-major-mode)
+  '(;; (lordar-mode-line-segments-buffer-name)
+    ;; (lordar-mode-line-segments-major-mode)
     (lordar-mode-line-segments-project-root-basename)
     (lordar-mode-line-segments-project-root-relative-directory)
     (lordar-mode-line-segments-vertical-space))
@@ -309,9 +309,7 @@ The left part is aligned to the left side and the right part to the right."
 ;;;; Setup
 
 (defvar lordar-mode-line-setup-hooks-alist
-  '((change-major-mode-hook . lordar-mode-line--set-major-mode-specific)
-    ;; (find-file-hook . lordar-mode-line--set-major-mode-specific)
-    )
+  '((change-major-mode-hook . lordar-mode-line--set-major-mode-specific))
   "Alist of hooks and their corresponding setup functions.")
 
 (defvar lordar-mode-line--setup-advices-alist

@@ -148,19 +148,32 @@ If WIDTH is nil, set it to 1."
   "Face used to display the major mode in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-major-mode (&optional format-string)
-  "Return the pretty name of the current buffer's major mode.
+(defvar-local lordar-mode-line-segments--major-mode nil
+  "Cache the major mode.")
+
+(defun lordar-mode-line-segments--major-mode-update (&optional format-string)
+  "Cache the pretty name of the current buffer's major mode.
 Use FORMAT-STRING to change the output format."
   (let* ((mode-name (format-mode-line mode-name))
          (mode-name-formatted (if format-string
                                   (format format-string mode-name)
                                 mode-name)))
-    (lordar-mode-line-segments--propertize mode-name-formatted 'major-mode)))
+    (setq-local lordar-mode-line-segments--major-mode mode-name-formatted)))
+
+(defun lordar-mode-line-segments-major-mode (&optional format-string)
+  "Return the pretty name of the current buffer's major mode.
+Use FORMAT-STRING to change the output format."
+  ;; Keeping this as the variable sometimes used the default value instead of
+  ;; making a local one. This solved it. Trying again without.
+  ;; (unless (or (local-variable-p 'lordar-mode-line-segments--major-mode)
+  ;;             lordar-mode-line-segments--major-mode)
+  ;;   (lordar-mode-line-segments--major-mode-update format-string))
+  (unless lordar-mode-line-segments--major-mode
+    (lordar-mode-line-segments--major-mode-update format-string))
+  (lordar-mode-line-segments--propertize lordar-mode-line-segments--major-mode
+                                         'major-mode))
 
 ;;;; Segment Buffer Name
-
-;; The name of the buffer.
-;; Example: lordar-mode-line-segments.el
 
 (defface lordar-mode-line-buffer-name
   '((t (:inherit lordar-mode-line)))
@@ -172,14 +185,25 @@ Use FORMAT-STRING to change the output format."
   "Face used to display the buffer name in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-buffer-name (&optional format-string)
-  "Return the name of the current buffer.
+(defvar-local lordar-mode-line-segments--buffer-name nil
+  "Cache the buffer name.")
+
+(defun lordar-mode-line-segments--buffer-name-update (&optional format-string)
+  "Cache the name of the current buffer.
 Use FORMAT-STRING to change the output."
   (let* ((buffer-name (buffer-name))
          (buffer-name-formatted (if format-string
                                     (format buffer-name)
                                   buffer-name)))
-    (lordar-mode-line-segments--propertize buffer-name-formatted 'buffer-name)))
+    (setq-local lordar-mode-line-segments--buffer-name buffer-name-formatted)))
+
+(defun lordar-mode-line-segments-buffer-name (&optional format-string)
+  "Return the name of the current buffer.
+Use FORMAT-STRING to change the output."
+  (unless lordar-mode-line-segments--buffer-name
+    (lordar-mode-line-segments--buffer-name-update format-string))
+  (lordar-mode-line-segments--propertize lordar-mode-line-segments--buffer-name
+                                         'buffer-name))
 
 ;;;; Segment Buffer Status
 
@@ -232,16 +256,23 @@ Valid keywords are:
   "Face used to display the read-only status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-buffer-status (&optional format-string)
+(defvar lordar-mode-line-segments--buffer-status nil
+  "Cache buffer status.")
+
+(defun lordar-mode-line-segments--buffer-status (&optional format-string)
   "Return an indicator representing the status of the current buffer.
 Uses symbols defined in `lordar-mode-line-buffer-status-symbols'.
 Use FORMAT-STRING to change the output format."
   (when (buffer-file-name (buffer-base-buffer))
-    (when-let* ((symbol-and-face
+    (when-let* ((status (format-mode-line mode-line-modified))
+                (symbol-and-face
                  (cond
-                  (buffer-read-only '(buffer-read-only buffer-status-read-only))
-                  ((buffer-modified-p) '(buffer-modified buffer-status-modified))
-                  (t '(buffer-not-modified buffer-status))))
+                  ((string= status "--") '(buffer-not-modified buffer-status))
+                  ((string= status "**") '(buffer-modified
+                                           buffer-status-modified))
+                  ;; for others %% and %- > as long as read only I don't care
+                  ;; about modified.
+                  (t '(buffer-read-only buffer-status-read-only))))
                 (symbol (lordar-mode-line-segments--get-symbol
                          (car symbol-and-face) 'buffer-status))
                 (symbol-formatted (if format-string
