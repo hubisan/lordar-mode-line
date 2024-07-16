@@ -27,12 +27,9 @@
 ;;; Commentary:
 
 ;; Lordar-mode-line is a minimal mode-line.
-;; It is inspired by mood-line.
+;; It is inspired by mood-line, doom-modeline, nano-modeline.
 ;;
-;; To activate use (lordar-mode-line-mode).
-;;
-;; The default mode-line will be activated for all buffers.
-;; If you want to use custom segments in a major-mode you can do as follows:
+;; To activate call `lordar-mode-line'.
 
 ;;; Code:
 
@@ -45,8 +42,6 @@
   (declare-function flymake-start "flymake"))
 
 ;;;; Customization
-
-;; Segment's customization variables are defined before each segment.
 
 (defgroup lordar-mode-line nil
   "A minimal mode line configuration."
@@ -72,8 +67,10 @@ The :left key defines segment functions or strings to be displayed on the left
 side of the mode line, while the :right key defines those for the right side.
 Some segment functions support additional arguments."
   :group 'lordar-mode-line
-  :type '(plist :key-type (choice (const :left) (const :right))
-                :value-type (repeat sexp string)))
+  :type '(plist :tag "Mode Line Segments"
+                :key-type (choice (const :tag "Left Segments" :left)
+                                  (const :tag "Right Segments" :right))
+                :value-type (repeat :tag "Segment Function or String" sexp)))
 
 (defcustom lordar-mode-line-prog-mode-segments
   '(:left
@@ -97,8 +94,10 @@ The :left key defines segment functions or strings to be displayed on the left
 side of the mode line, while the :right key defines those for the right side.
 Some segment functions support additional arguments."
   :group 'lordar-mode-line
-  :type '(plist :key-type (choice (const :left) (const :right))
-                :value-type (repeat sexp)))
+  :type '(plist :tag "Mode Line Segments"
+                :key-type (choice (const :tag "Left Segments" :left)
+                                  (const :tag "Right Segments" :right))
+                :value-type (repeat :tag "Segment Function or String" sexp)))
 
 (defcustom lordar-mode-line-minimal-segments
   '(:left
@@ -115,12 +114,10 @@ The :left key defines segment functions or strings to be displayed on the left
 side of the mode line, while the :right key defines those for the right side.
 Some segment functions support additional arguments."
   :group 'lordar-mode-line
-  :type '(plist
-          :key-type (choice (const :left) (const :right))
-          :value-type (repeat (choice (group :tag "Segment Function and Format"
-                                             (function :tag "Segment Function")
-                                             (string :tag "Format String"))
-                                      (string :tag "String Segment")))))
+  :type '(plist :tag "Mode Line Segments"
+                :key-type (choice (const :tag "Left Segments" :left)
+                                  (const :tag "Right Segments" :right))
+                :value-type (repeat :tag "Segment Function or String" sexp)))
 
 (defcustom lordar-mode-line-major-mode-definitions
   '((prog-mode . lordar-mode-line-prog-mode-segments)
@@ -136,8 +133,6 @@ The corresponding value must be a variable containing the segments."
 
 ;;;; Faces
 
-;; Segment's faces are defined before each segment.
-
 (defgroup lordar-mode-line-faces nil
   "Faces used by lordar-mode-line."
   :group 'lordar-mode-line
@@ -145,24 +140,24 @@ The corresponding value must be a variable containing the segments."
 
 (defface lordar-mode-line
   '((t (:inherit mode-line)))
-  "Default face used if the mode-line."
+  "Default face used in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-inactive
   '((t (:inherit mode-line-inactive)))
-  "Default face used if the mode-line is inactive."
+  "Default face used if the mode line is inactive."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-warning
   `((t (:inherit warning :background ,(or (face-background 'lordar-mode-line)
                                           'unspecified))))
-  "Default face used for a warning in the mode-line."
+  "Default face used for a warnings in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-error
   `((t (:inherit error :background ,(or (face-background 'lordar-mode-line)
                                         'unspecified))))
-  "Default face used for an error in the mode-line."
+  "Default face used for an errors in the mode line."
   :group 'lordar-mode-line-faces)
 
 ;;;; Variables
@@ -179,37 +174,38 @@ The corresponding value must be a variable containing the segments."
     (lordar-mode-line-segments-major-mode)
     (lordar-mode-line-segments-project-root-basename)
     (lordar-mode-line-segments-project-root-relative-directory)
-    (lordar-mode-line-segments-vertical-space)
-    ;; (lordar-mode-line-segments-input-method
-    ;;  :hooks (input-method-deactivate-hook))
-    )
+    (lordar-mode-line-segments-vertical-space))
   "Specification of segments to cache and their invalidation hooks.")
 
-(defun lordar-mode-line--segments-cache-add-invalidation-hooks (segment)
-  "Add local hooks to invalidate the cache for the given SEGMENT."
-  (let ((hooks (plist-get
-                (cdr (assq segment lordar-mode-line--segments-cache-specs))
-                :hooks)))
-    (when hooks
-      (dolist (hook hooks)
-        (add-hook
-         hook
-         (lambda () (lordar-mode-line--segments-cache-invalidate segment))
-         nil t)))))
+(defun lordar-mode-line--segments-cache-reset ()
+  "Reset `lordar-mode-line--segments-cache'."
+  (setq-local lordar-mode-line--segments-cache (make-hash-table :test 'equal)))
 
-(defun lordar-mode-line--segments-cache-remove-hooks ()
-  "Remove all local hooks for cache invalidation."
-  (dolist (spec lordar-mode-line--segments-cache-specs)
-    (let* ((segment (car spec))
-           (hooks (plist-get
-                   (cdr (assq segment lordar-mode-line--segments-cache-specs))
-                   :hooks)))
-      (when hooks
-        (dolist (hook hooks)
-          (remove-hook
-           hook
-           (lambda () (lordar-mode-line--segments-cache-invalidate segment))
-           t))))))
+;; (defun lordar-mode-line--segments-cache-add-invalidation-hooks (segment)
+;;   "Add local hooks to invalidate the cache for the given SEGMENT."
+;;   (let ((hooks (plist-get
+;;                 (cdr (assq segment lordar-mode-line--segments-cache-specs))
+;;                 :hooks)))
+;;     (when hooks
+;;       (dolist (hook hooks)
+;;         (add-hook
+;;          hook
+;;          (lambda () (lordar-mode-line--segments-cache-invalidate segment))
+;;          nil t)))))
+
+;; (defun lordar-mode-line--segments-cache-remove-hooks ()
+;;   "Remove all local hooks for cache invalidation."
+;;   (dolist (spec lordar-mode-line--segments-cache-specs)
+;;     (let* ((segment (car spec))
+;;            (hooks (plist-get
+;;                    (cdr (assq segment lordar-mode-line--segments-cache-specs))
+;;                    :hooks)))
+;;       (when hooks
+;;         (dolist (hook hooks)
+;;           (remove-hook
+;;            hook
+;;            (lambda () (lordar-mode-line--segments-cache-invalidate segment))
+;;            t))))))
 
 (defun lordar-mode-line--segments-cache-invalidate (segment)
   "Invalidate the cache for the given SEGMENT."
@@ -221,7 +217,8 @@ Local hooks will be added to invalidate the cache if necessary."
   (let ((key (or (and (listp segment) (car segment)) segment)))
     (when (assoc key lordar-mode-line--segments-cache-specs)
       (puthash key value lordar-mode-line--segments-cache)
-      (lordar-mode-line--segments-cache-add-invalidation-hooks key))))
+      ;; (lordar-mode-line--segments-cache-add-invalidation-hooks key)
+      )))
 
 (defun lordar-mode-line--segments-cache-get (segment)
   "Get the value associated with SEGMENT from the buffer-local mode line cache."
@@ -237,6 +234,9 @@ be aligned to the left, and :right contains segments or strings to be aligned
 to the right. The resulting string will be padded in the center to fit the width
 of the window. If SEGMENTS is nil, the default specification
 `lordar-mode-line-default-segments' is used."
+  ;; For some reason I was not able to find out the cache got corrupted. The
+  ;; local variable for some reason already had values in a new buffer.
+  (lordar-mode-line--segments-cache-reset)
   (when-let ((segments (or segments lordar-mode-line-default-segments))
              (modeline
               (list "%e"
@@ -245,11 +245,11 @@ of the window. If SEGMENTS is nil, the default specification
         (setq-default mode-line-format modeline)
       (setq-local mode-line-format modeline))))
 
-(defun lordar-mode-line--set-major-mode-specific (&optional set-default)
+(defun lordar-mode-line--set-major-mode-specific ()
   "Set the mode line per major mode if a definition exists.
 The definitions can be found in `lordar-mode-line-major-mode-definitions'.
-When SET-DEFAULT is non-nil, set the default segments locally."
-  (unless (minibuffer-window-active-p (selected-window))
+When no match found the default segments are used."
+  (unless (minibufferp)
     (let ((found nil))  ;; Flag to track if a match was found
       (catch 'done
         (dolist (entry lordar-mode-line-major-mode-definitions)
@@ -261,7 +261,7 @@ When SET-DEFAULT is non-nil, set the default segments locally."
                 (setq found t)  ;; Set the flag
                 (throw 'done t))))))  ;; Exit both loops when a match is found
       ;; If no match was found, set the default mode line
-      (when (and set-default (not found))
+      (unless found
         (lordar-mode-line-set-mode-line)))))
 
 (defun lordar-mode-line--eval-segment (segment)
@@ -305,6 +305,61 @@ The left part is aligned to the left side and the right part to the right."
                    'face (lordar-mode-line-segments--get-face))))
     (concat left padding right)))
 
+;;;; Setup
+
+(defvar lordar-mode-line--setup-hooks-alist
+  '((change-major-mode-hook . lordar-mode-line--set-major-mode-specific))
+  "Alist of hooks and their corresponding setup functions.")
+
+(defvar lordar-mode-line--setup-advices-alist
+  '((vc-refresh-state
+     :after lordar-mode-line-segments--vc-branch-and-state-update)
+    (flymake--handle-report
+     :after lordar-mode-line-segments--syntax-checking-counters-update)
+    (flymake-start
+     :after lordar-mode-line-segments--syntax-checking-counters-update))
+  "Alist of functions and their corresponding advice functions and places.")
+
+(defun lordar-mode-line--setup-hooks (&optional remove)
+  "Setup hooks to update some segments.
+When REMOVE is non-nil remove the hooks else add them.
+Adds or removes the hooks stored in `lordar-mode-line--setup-hooks-alist'."
+  (let* ((hook-fn (if remove #'remove-hook #'add-hook)))
+    (dolist (hook lordar-mode-line--setup-hooks-alist)
+      (funcall hook-fn (car hook) (cdr hook)))))
+
+(defun lordar-mode-line--setup-advices (&optional remove)
+  "Setup advices to update some segments.
+When REMOVE is non-nil remove the advices else add the advices."
+  (dolist (advice lordar-mode-line--setup-advices-alist)
+    (let ((fn-to-advice (nth 0 advice))
+          (place (nth 1 advice))
+          (fn-to-call (nth 2 advice)))
+      (if remove
+          (advice-remove fn-to-advice fn-to-call)
+        (advice-add fn-to-advice place fn-to-call)))))
+
+(defun lordar-mode-line--setup-activate ()
+  "Activate the lordar-mode-line."
+  (lordar-mode-line-set-mode-line nil t)
+  ;; Change mode line in active buffers.
+  (dolist (buffer (buffer-list))
+    (with-current-buffer buffer
+      (lordar-mode-line--set-major-mode-specific t)))
+  (lordar-mode-line--setup-hooks)
+  (lordar-mode-line--setup-advices))
+
+(defun lordar-mode-line--setup-deactivate ()
+  "Deactivate the lordar-mode-line."
+  (lordar-mode-line--setup-hooks 'remove)
+  (lordar-mode-line--setup-advices 'remove)
+  ;; Restore the old mode-line-format.
+  (let* ((original-value (eval (car (get 'mode-line-format 'standard-value)))))
+    (setq-default mode-line-format original-value)
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer
+        (setq mode-line-format original-value)))))
+
 ;;;; Minor-mode
 
 ;;;###autoload
@@ -314,45 +369,8 @@ The left part is aligned to the left side and the right part to the right."
   :global t
   :lighter nil
   (if lordar-mode-line-mode
-      (lordar-mode-line--activate)
-    (lordar-mode-line--deactivate)))
-
-(defun lordar-mode-line--activate ()
-  "Activate the lordar-mode-line."
-  (lordar-mode-line-set-mode-line nil t)
-  ;; Change mode line in active buffers.
-  (dolist (buffer (buffer-list))
-    (with-current-buffer buffer
-      (lordar-mode-line--set-major-mode-specific t)))
-  (advice-add 'vc-refresh-state :after
-              #'lordar-mode-line-segments--vc-branch-and-state-update)
-  (advice-add #'flymake--handle-report :after
-              #'lordar-mode-line-segments--syntax-checking-counters-update)
-  (advice-add #'flymake-start :after
-              #'lordar-mode-line-segments--syntax-checking-counters-update)
-  ;; change-major-mode-hook is called too often, using find file hook instead.
-  ;; If you change the major mode in a buffer the mode line will not be changed.
-  ;; But this happens rarely.
-  (add-hook 'find-file-hook
-            #'lordar-mode-line--set-major-mode-specific))
-
-(defun lordar-mode-line--deactivate ()
-  "Deactivate the lordar-mode-line."
-  (advice-remove 'vc-refresh-state
-                 #'lordar-mode-line-segments--vc-branch-and-state-update)
-  (advice-remove #'flymake--handle-report
-                 #'lordar-mode-line-segments--syntax-checking-counters-update)
-  (advice-remove #'flymake-start
-                 #'lordar-mode-line-segments--syntax-checking-counters-update)
-  (remove-hook 'find-file-hook
-               #'lordar-mode-line--set-major-mode-specific)
-  ;; Restore the old mode-line-format.
-  (let* ((original-value (eval (car (get 'mode-line-format 'standard-value)))))
-    (setq-default mode-line-format original-value)
-    (dolist (buffer (buffer-list))
-      (with-current-buffer buffer
-        (setq mode-line-format original-value)
-        (lordar-mode-line--segments-cache-remove-hooks)))))
+      (lordar-mode-line--setup-activate)
+    (lordar-mode-line--setup-deactivate)))
 
 (provide 'lordar-mode-line)
 
