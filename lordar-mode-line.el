@@ -308,7 +308,7 @@ The left part is aligned to the left side and the right part to the right."
 
 ;;;; Setup
 
-(defvar lordar-mode-line--setup-hooks-alist
+(defvar lordar-mode-line-setup-hooks-alist
   '((change-major-mode-hook . lordar-mode-line--set-major-mode-specific)
     ;; (find-file-hook . lordar-mode-line--set-major-mode-specific)
     )
@@ -326,9 +326,9 @@ The left part is aligned to the left side and the right part to the right."
 (defun lordar-mode-line--setup-hooks (&optional remove)
   "Setup hooks to update some segments.
 When REMOVE is non-nil remove the hooks else add them.
-Adds or removes the hooks stored in `lordar-mode-line--setup-hooks-alist'."
+Adds or removes the hooks stored in `lordar-mode-line-setup-hooks-alist'."
   (let* ((hook-fn (if remove #'remove-hook #'add-hook)))
-    (dolist (hook lordar-mode-line--setup-hooks-alist)
+    (dolist (hook lordar-mode-line-setup-hooks-alist)
       (funcall hook-fn (car hook) (cdr hook)))))
 
 (defun lordar-mode-line--setup-advices (&optional remove)
