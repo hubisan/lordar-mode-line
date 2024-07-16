@@ -207,9 +207,9 @@ The corresponding value must be a variable containing the segments."
 ;;            (lambda () (lordar-mode-line--segments-cache-invalidate segment))
 ;;            t))))))
 
-(defun lordar-mode-line--segments-cache-invalidate (segment)
-  "Invalidate the cache for the given SEGMENT."
-  (remhash segment lordar-mode-line--segments-cache))
+;; (defun lordar-mode-line--segments-cache-invalidate (segment)
+;;   "Invalidate the cache for the given SEGMENT."
+;;   (remhash segment lordar-mode-line--segments-cache))
 
 (defun lordar-mode-line--segments-cache-set (segment value)
   "Set the SEGMENT to VALUE in the buffer-local mode line cache.
@@ -234,9 +234,6 @@ be aligned to the left, and :right contains segments or strings to be aligned
 to the right. The resulting string will be padded in the center to fit the width
 of the window. If SEGMENTS is nil, the default specification
 `lordar-mode-line-default-segments' is used."
-  ;; For some reason I was not able to find out the cache got corrupted. The
-  ;; local variable for some reason already had values in a new buffer.
-  (lordar-mode-line--segments-cache-reset)
   (when-let ((segments (or segments lordar-mode-line-default-segments))
              (modeline
               (list "%e"
@@ -287,6 +284,10 @@ If it is a string, propertize it with the default face."
 (defun lordar-mode-line--construct-string (segments)
   "Construct a mode line with SEGMENTS which contains left and right parts.
 The left part is aligned to the left side and the right part to the right."
+  (unless (local-variable-p 'lordar-mode-line--segments-cache)
+    ;; Make sure it is using buffer local values. Sometimes it used the default
+    ;; one, not sure why though.
+    (lordar-mode-line--segments-cache-reset))
   (let* ((left (plist-get segments :left))
          (right (plist-get segments :right))
          (left (when left (mapconcat #'lordar-mode-line--eval-segment left)))
@@ -308,7 +309,8 @@ The left part is aligned to the left side and the right part to the right."
 ;;;; Setup
 
 (defvar lordar-mode-line--setup-hooks-alist
-  '((change-major-mode-hook . lordar-mode-line--set-major-mode-specific))
+  '(;; (change-major-mode-hook . lordar-mode-line--set-major-mode-specific)
+    (find-file-hook . lordar-mode-line--set-major-mode-specific))
   "Alist of hooks and their corresponding setup functions.")
 
 (defvar lordar-mode-line--setup-advices-alist

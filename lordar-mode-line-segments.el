@@ -277,8 +277,7 @@ Use FORMAT-STRING to change the output."
     (let* ((root (if-let* ((project (project-current)))
                      (project-root project)
                    default-directory))
-           (basename (file-name-nondirectory
-                      (directory-file-name (file-local-name root))))
+           (basename (file-name-nondirectory root))
            (basename-formatted (if format-string
                                    (format format-string basename)
                                  basename)))
@@ -302,8 +301,7 @@ Use FORMAT-STRING to change the output format."
                        (root-parent (file-name-parent-directory root)))
                   (file-relative-name default-directory root-parent))
               default-directory))
-           (directory (directory-file-name (abbreviate-file-name
-                                            (file-local-name directory))))
+           (directory (directory-file-name (abbreviate-file-name directory)))
            (directory-formatted (if format-string
                                     (format format-string directory)
                                   directory)))
