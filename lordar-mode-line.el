@@ -164,67 +164,6 @@ The corresponding value must be a variable containing the segments."
 
 ;;;; Auxiliary Functions
 
-;;;; Cache
-
-(defvar-local lordar-mode-line--segments-cache (make-hash-table :test 'equal)
-  "Cache for storing mode line segments.")
-
-(defvar lordar-mode-line--segments-cache-specs
-  '(;; (lordar-mode-line-segments-buffer-name)
-    ;; (lordar-mode-line-segments-major-mode)
-    (lordar-mode-line-segments-project-root-basename)
-    (lordar-mode-line-segments-project-root-relative-directory)
-    (lordar-mode-line-segments-vertical-space))
-  "Specification of segments to cache and their invalidation hooks.")
-
-(defun lordar-mode-line--segments-cache-reset ()
-  "Reset `lordar-mode-line--segments-cache'."
-  (setq-local lordar-mode-line--segments-cache (make-hash-table :test 'equal)))
-
-;; (defun lordar-mode-line--segments-cache-add-invalidation-hooks (segment)
-;;   "Add local hooks to invalidate the cache for the given SEGMENT."
-;;   (let ((hooks (plist-get
-;;                 (cdr (assq segment lordar-mode-line--segments-cache-specs))
-;;                 :hooks)))
-;;     (when hooks
-;;       (dolist (hook hooks)
-;;         (add-hook
-;;          hook
-;;          (lambda () (lordar-mode-line--segments-cache-invalidate segment))
-;;          nil t)))))
-
-;; (defun lordar-mode-line--segments-cache-remove-hooks ()
-;;   "Remove all local hooks for cache invalidation."
-;;   (dolist (spec lordar-mode-line--segments-cache-specs)
-;;     (let* ((segment (car spec))
-;;            (hooks (plist-get
-;;                    (cdr (assq segment lordar-mode-line--segments-cache-specs))
-;;                    :hooks)))
-;;       (when hooks
-;;         (dolist (hook hooks)
-;;           (remove-hook
-;;            hook
-;;            (lambda () (lordar-mode-line--segments-cache-invalidate segment))
-;;            t))))))
-
-;; (defun lordar-mode-line--segments-cache-invalidate (segment)
-;;   "Invalidate the cache for the given SEGMENT."
-;;   (remhash segment lordar-mode-line--segments-cache))
-
-(defun lordar-mode-line--segments-cache-set (segment value)
-  "Set the SEGMENT to VALUE in the buffer-local mode line cache.
-Local hooks will be added to invalidate the cache if necessary."
-  (let ((key (or (and (listp segment) (car segment)) segment)))
-    (when (assoc key lordar-mode-line--segments-cache-specs)
-      (puthash key value lordar-mode-line--segments-cache)
-      ;; (lordar-mode-line--segments-cache-add-invalidation-hooks key)
-      )))
-
-(defun lordar-mode-line--segments-cache-get (segment)
-  "Get the value associated with SEGMENT from the buffer-local mode line cache."
-  (let ((key (or (and (listp segment) (car segment)) segment)))
-    (gethash key lordar-mode-line--segments-cache)))
-
 ;;;; Set Modeline
 
 (defun lordar-mode-line-set-mode-line (&optional segments default)
@@ -262,32 +201,15 @@ When no match found the default segments are used."
         (lordar-mode-line-set-mode-line)))))
 
 (defun lordar-mode-line--eval-segment (segment)
-  "Evaluate the SEGMENT and return a concatenated string.
-If it is a string, propertize it with the default face."
+  "Eval the SEGMENT and concacenate into a string.
+If it is a string propertize it with the default face."
   (if (stringp segment)
       (propertize segment 'face (lordar-mode-line-segments--get-face))
-    (let ((cached-value (lordar-mode-line--segments-cache-get segment)))
-      (if cached-value
-          (let ((face (get-text-property 0 'face cached-value)))
-            (when face
-              (let* ((face-name (symbol-name face))
-                     (cleaned-face-name
-                      (replace-regexp-in-string
-                       "\\`lordar-mode-line-\\|-inactive\\'" "" face-name)))
-                (setq face (intern cleaned-face-name))))
-            (propertize cached-value 'face
-                        (lordar-mode-line-segments--get-face face)))
-        (let ((value (eval segment)))
-          (lordar-mode-line--segments-cache-set segment value)
-          value)))))
+    (eval segment)))
 
 (defun lordar-mode-line--construct-string (segments)
   "Construct a mode line with SEGMENTS which contains left and right parts.
 The left part is aligned to the left side and the right part to the right."
-  (unless (local-variable-p 'lordar-mode-line--segments-cache)
-    ;; Make sure it is using buffer local values. Sometimes it used the default
-    ;; one, not sure why though.
-    (lordar-mode-line--segments-cache-reset))
   (let* ((left (plist-get segments :left))
          (right (plist-get segments :right))
          (left (when left (mapconcat #'lordar-mode-line--eval-segment left)))

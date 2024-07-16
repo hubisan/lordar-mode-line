@@ -149,7 +149,7 @@ If WIDTH is nil, set it to 1."
   :group 'lordar-mode-line-faces)
 
 (defvar-local lordar-mode-line-segments--major-mode nil
-  "Cache the major mode.")
+  "Cache for the major mode.")
 
 (defun lordar-mode-line-segments--major-mode-update (&optional format-string)
   "Cache the pretty name of the current buffer's major mode.
@@ -170,8 +170,9 @@ Use FORMAT-STRING to change the output format."
   ;;   (lordar-mode-line-segments--major-mode-update format-string))
   (unless lordar-mode-line-segments--major-mode
     (lordar-mode-line-segments--major-mode-update format-string))
-  (lordar-mode-line-segments--propertize lordar-mode-line-segments--major-mode
-                                         'major-mode))
+  (when lordar-mode-line-segments--major-mode
+    (lordar-mode-line-segments--propertize lordar-mode-line-segments--major-mode
+                                           'major-mode)))
 
 ;;;; Segment Buffer Name
 
@@ -186,7 +187,7 @@ Use FORMAT-STRING to change the output format."
   :group 'lordar-mode-line-faces)
 
 (defvar-local lordar-mode-line-segments--buffer-name nil
-  "Cache the buffer name.")
+  "Cache for the buffer name.")
 
 (defun lordar-mode-line-segments--buffer-name-update (&optional format-string)
   "Cache the name of the current buffer.
@@ -202,8 +203,9 @@ Use FORMAT-STRING to change the output."
 Use FORMAT-STRING to change the output."
   (unless lordar-mode-line-segments--buffer-name
     (lordar-mode-line-segments--buffer-name-update format-string))
-  (lordar-mode-line-segments--propertize lordar-mode-line-segments--buffer-name
-                                         'buffer-name))
+  (when lordar-mode-line-segments--buffer-name
+    (lordar-mode-line-segments--propertize lordar-mode-line-segments--buffer-name
+                                           'buffer-name)))
 
 ;;;; Segment Buffer Status
 
@@ -256,9 +258,6 @@ Valid keywords are:
   "Face used to display the read-only status in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defvar lordar-mode-line-segments--buffer-status nil
-  "Cache buffer status.")
-
 (defun lordar-mode-line-segments-buffer-status (&optional format-string)
   "Return an indicator representing the status of the current buffer.
 Uses symbols defined in `lordar-mode-line-buffer-status-symbols'.
@@ -281,17 +280,7 @@ Use FORMAT-STRING to change the output format."
                 (face-symbol (cadr symbol-and-face)))
       (lordar-mode-line-segments--propertize symbol-formatted face-symbol))))
 
-;;;; Segment Project Directory
-
-(defface lordar-mode-line-project-directory
-  '((t (:inherit lordar-mode-line)))
-  "Face used to display project directory in the mode line."
-  :group 'lordar-mode-line-faces)
-
-(defface lordar-mode-line-project-directory-inactive
-  '((t (:inherit lordar-mode-line-inactive)))
-  "Face used to display project directory in the mode line when inactive."
-  :group 'lordar-mode-line-faces)
+;;;; Segment Project Root
 
 (defun lordar-mode-line-segments--project-root-buffer-valid-p  ()
   "Check if the current buffer is a valid project buffer.
@@ -300,20 +289,80 @@ A buffer is considered valid if it is associated with a file or if it is in
   (or (buffer-file-name)
       (eq major-mode 'dired-mode)))
 
+;;;;; Segment Project Root Basename
+
+(defface lordar-mode-line-project-root-basename
+  '((t (:inherit lordar-mode-line)))
+  "Face used to display project root basename in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-project-root-basename-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used to display project root basename in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defvar-local lordar-mode-line-segments--project-root-basename nil
+  "Cache for the project root basename.")
+
+(defun lordar-mode-line-segments--project-root-basename-update (&optional format-string)
+  "Update the project root basename.
+If not in a project the basename of `default-directory' is returned.
+Use FORMAT-STRING to change the output."
+  (let* ((root (if-let* ((project (project-current)))
+                   (project-root project)
+                 default-directory))
+         (basename (file-name-nondirectory (directory-file-name root)))
+         (basename-formatted (if format-string
+                                 (format format-string basename)
+                               basename)))
+    (setq-local lordar-mode-line-segments--project-root-basename
+                basename-formatted)))
+
 (defun lordar-mode-line-segments-project-root-basename (&optional format-string)
   "Return the project root basename.
 If not in a project the basename of `default-directory' is returned.
 Use FORMAT-STRING to change the output."
   (when (lordar-mode-line-segments--project-root-buffer-valid-p)
-    (let* ((root (if-let* ((project (project-current)))
-                     (project-root project)
-                   default-directory))
-           (basename (file-name-nondirectory root))
-           (basename-formatted (if format-string
-                                   (format format-string basename)
-                                 basename)))
-      (lordar-mode-line-segments--propertize basename-formatted
-                                             'project-directory))))
+    (unless lordar-mode-line-segments--project-root-basename
+      (lordar-mode-line-segments--project-root-basename-update
+       format-string))
+    (when lordar-mode-line-segments--project-root-basename
+      (lordar-mode-line-segments--propertize
+       lordar-mode-line-segments--project-root-basename
+       'project-root-basename))))
+
+;;;;; Segment Project Root Relative Directory
+
+(defface lordar-mode-line-project-root-relative-directory
+  '((t (:inherit lordar-mode-line)))
+  "Face used to display project root relative directory in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-project-root-relative-directory-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face used to display project root relative dir in mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defvar-local lordar-mode-line-segments--project-root-relative-directory nil
+  "Cache for the project root relative directory.")
+
+(defun lordar-mode-line-segments--project-root-relative-directory-update (&optional format-string)
+  "Cache the directory path relative to the root of the project.
+If not in a project, the `default-directory' is returned.
+Use FORMAT-STRING to change the output format."
+  (let* ((project (project-current))
+         (directory
+          (if project
+              (let* ((root (project-root project))
+                     (root-parent (file-name-parent-directory root)))
+                (file-relative-name default-directory root-parent))
+            default-directory))
+         (directory (directory-file-name (abbreviate-file-name directory)))
+         (directory-formatted (if format-string
+                                  (format format-string directory)
+                                directory)))
+    (setq lordar-mode-line-segments--project-root-relative-directory
+          directory-formatted)))
 
 (defun lordar-mode-line-segments-project-root-relative-directory (&optional format-string)
   "Return the directory path relative to the root of the project.
@@ -325,26 +374,26 @@ Examples:
   if visiting ~/projects/emacs-never-dies.org.
 Use FORMAT-STRING to change the output format."
   (when (lordar-mode-line-segments--project-root-buffer-valid-p)
-    (let* ((project (project-current))
-           (directory
-            (if project
-                (let* ((root (project-root project))
-                       (root-parent (file-name-parent-directory root)))
-                  (file-relative-name default-directory root-parent))
-              default-directory))
-           (directory (directory-file-name (abbreviate-file-name directory)))
-           (directory-formatted (if format-string
-                                    (format format-string directory)
-                                  directory)))
-      (lordar-mode-line-segments--propertize directory-formatted
-                                             'project-directory))))
+    (unless lordar-mode-line-segments--project-root-relative-directory
+      (lordar-mode-line-segments--project-root-relative-directory-update
+       format-string))
+    (when lordar-mode-line-segments--project-root-relative-directory
+      (lordar-mode-line-segments--propertize
+       lordar-mode-line-segments--project-root-relative-directory
+       'project-root-relative-directory))))
 
 ;;;; Segment Version Control
 
 (defvar-local lordar-mode-line-segments--vc-branch-and-state nil
-  "List with vc branch and vc state symbol.
-This variable is needed to update the mode line branch and state text with
-advices or hooks.")
+  "Cache for the vc branch and vc state.")
+
+(defun lordar-mode-line-segments--vc-branch-and-state-update (&rest _args)
+  "Update `lordar-mode-line-segments--vc-branch-and-state'.
+Set vc branch text as car and vc state symbol as cdr."
+  (let* ((vc-branch (lordar-mode-line-segments--vc-branch-get))
+         (vc-state (lordar-mode-line-segments--vc-state-get)))
+    (setq-local lordar-mode-line-segments--vc-branch-and-state
+                (list vc-branch vc-state))))
 
 ;;;;; Version Control Branch
 
@@ -494,16 +543,6 @@ Use FORMAT-STRING to change the output."
               (face-symbol (lordar-mode-line-segments--vc-state-get-face)))
     (lordar-mode-line-segments--propertize state-formatted face-symbol)))
 
-;;;;; Version Control Update
-
-(defun lordar-mode-line-segments--vc-branch-and-state-update (&rest _args)
-  "Update `lordar-mode-line-segments--vc-branch-and-state'.
-Set vc branch text as car and vc state symbol as cdr."
-  (let* ((vc-branch (lordar-mode-line-segments--vc-branch-get))
-         (vc-state (lordar-mode-line-segments--vc-state-get)))
-    (setq-local lordar-mode-line-segments--vc-branch-and-state
-                (list vc-branch vc-state))))
-
 ;;;; Segment Input Method
 
 (defface lordar-mode-line-input-method
@@ -516,7 +555,10 @@ Set vc branch text as car and vc state symbol as cdr."
   "Face used to display the input method in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments-input-method (&optional format-string)
+(defvar-local lordar-mode-line-segments--input-method nil
+  "Cache for input method.")
+
+(defun lordar-mode-line-segments--input-method-update (&optional format-string)
   "Return the current input method.
 Use FORMAT-STRING to change the output."
   ;; From doom-modeline. Apparently evil adds some advice or so and
@@ -530,8 +572,17 @@ Use FORMAT-STRING to change the output."
               (input-method-formatted (if format-string
                                           (format format-string input-method)
                                         input-method)))
-    (lordar-mode-line-segments--propertize input-method-formatted
-                                           'input-method)))
+    (setq lordar-mode-line-segments--input-method input-method-formatted)))
+
+(defun lordar-mode-line-segments-input-method (&optional format-string)
+  "Return the current input method.
+Use FORMAT-STRING to change the output."
+  (unless lordar-mode-line-segments--input-method
+    (lordar-mode-line-segments--input-method-update format-string))
+  (when lordar-mode-line-segments--input-method
+    (lordar-mode-line-segments--propertize
+     lordar-mode-line-segments--input-method
+     'input-method)))
 
 ;;;; Segment Syntax-Checking
 
