@@ -39,7 +39,8 @@
   (defvar current-input-method)
   (defvar current-input-method-title)
   (defvar default-input-method)
-  (defvar input-method-alist))
+  (defvar input-method-alist)
+  (defvar mode-line-modified))
 
 (eval-when-compile
   (declare-function winum-get-number-string "ext:winum")
@@ -194,7 +195,7 @@ Use FORMAT-STRING to change the output format."
 Use FORMAT-STRING to change the output."
   (let* ((buffer-name (buffer-name))
          (buffer-name-formatted (if format-string
-                                    (format buffer-name)
+                                    (format format-string buffer-name)
                                   buffer-name)))
     (setq-local lordar-mode-line-segments--buffer-name buffer-name-formatted)))
 
@@ -213,7 +214,7 @@ Use FORMAT-STRING to change the output."
   '((buffer-not-modified . nil)
     (buffer-modified . "*")
     ;; %% is needed to print %.
-    (buffer-read-only . "%%"))
+    (buffer-read-only . "%"))
   "Symbols for buffer status in the mode line.
 Each entry is a cons cell with a keyword and a corresponding string.
 Valid keywords are:

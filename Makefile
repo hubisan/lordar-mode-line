@@ -8,7 +8,7 @@ EASK ?= eask
 help:
 	$(info )
 	$(info - make            # Show this help)
-	$(info - make all        # Run clean, package, install, compile, test and lint)
+	$(info - make all        # Run clean, package, install, compile, lint and test)
 	$(info - make clean      # Clean everything)
 	$(info - make package    # Build package artifact)
 	$(info - make install    # Install the package)
@@ -20,7 +20,7 @@ help:
 	$(info )
 	@echo > /dev/null
 
-all: clean package install compile test lint
+all: clean package install compile lint test
 
 clean:
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> CLEAN ALL'
