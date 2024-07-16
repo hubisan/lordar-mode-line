@@ -309,8 +309,9 @@ The left part is aligned to the left side and the right part to the right."
 ;;;; Setup
 
 (defvar lordar-mode-line--setup-hooks-alist
-  '(;; (change-major-mode-hook . lordar-mode-line--set-major-mode-specific)
-    (find-file-hook . lordar-mode-line--set-major-mode-specific))
+  '((change-major-mode-hook . lordar-mode-line--set-major-mode-specific)
+    ;; (find-file-hook . lordar-mode-line--set-major-mode-specific)
+    )
   "Alist of hooks and their corresponding setup functions.")
 
 (defvar lordar-mode-line--setup-advices-alist
