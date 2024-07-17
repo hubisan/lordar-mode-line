@@ -29,7 +29,8 @@
 
 (eval-when-compile
   (require 'project)
-  (require 'vc))
+  (require 'vc)
+  (require 'flymake))
 
 (eval-when-compile
   (defvar evil-mode-line-tag)
@@ -44,9 +45,7 @@
 
 (eval-when-compile
   (declare-function winum-get-number-string "ext:winum")
-  (declare-function flymake--mode-line-counter "flymake")
-  (declare-function flymake-diagnostic-type "flymake")
-  (declare-function flymake--severity "flymake"))
+  (declare-function flymake--severity "ext:flymake"))
 
 ;;;; Segments Auxiliary Functions & Variables
 

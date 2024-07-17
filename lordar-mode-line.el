@@ -231,7 +231,9 @@ The left part is aligned to the left side and the right part to the right."
 ;;;; Setup
 
 (defvar lordar-mode-line-setup-hooks-alist
-  '((change-major-mode-hook . lordar-mode-line--set-major-mode-specific)
+  '((find-file-hook . lordar-mode-line--set-major-mode-specific)
+    ;; This is too expensive. Really not happens often that I change a major-mode.
+    ;; (change-major-mode-hook . lordar-mode-line--set-major-mode-specific)
     (find-file-hook . lordar-mode-line-segments--vc-branch-and-state-update)
     (after-save-hook . lordar-mode-line-segments--vc-branch-and-state-update))
   "Alist of hooks and their corresponding setup functions.")
