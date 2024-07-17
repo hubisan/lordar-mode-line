@@ -68,9 +68,7 @@
 
     (it "raises an error when the key doesn't exist in the symbols alist"
       (expect (lordar-mode-line-segments--get-symbol 'non-existent-key 'buffer-status)
-              :to-throw 'user-error)))
-
-  (describe "- No test needed: lordar-mode-line-segments--propertize."))
+              :to-throw 'user-error))))
 
 (describe ">>> SEGMENTS\n"
 
@@ -123,8 +121,8 @@
     (describe "- lordar-mode-line-segments-major-mode"
 
       (it "returns the major mode name with the correct face and format"
-        (setq lordar-mode-line-segments--major-mode nil)
         (spy-on 'format-mode-line :and-return-value "Emacs Lisp")
+        (setq-local lordar-mode-line-segments--major-mode nil)
         (let* ((expected (propertize " Emacs Lisp" 'face
                                      'lordar-mode-line-major-mode)))
           (expect (lordar-mode-line-segments-major-mode " %s")
@@ -141,7 +139,7 @@
 
       (it "returns the buffer name with the correct face and format"
         (spy-on 'buffer-name :and-return-value "test-buffer")
-        (setq lordar-mode-line-segments--buffer-name nil)
+        (setq-local lordar-mode-line-segments--buffer-name nil)
         (let* ((expected (propertize " test-buffer" 'face
                                      'lordar-mode-line-buffer-name)))
           (expect (lordar-mode-line-segments-buffer-name " %s")
@@ -188,9 +186,7 @@
                 :and-return-value t)
         (spy-on 'project-current :and-return-value
                 '(vc Git "~/projects/coding/lordar-mode-line/"))
-        (let* ((inhibit-message t)
-               (lordar-mode-line-segments--project-root-basename nil)
-               (expected (propertize " lordar-mode-line" 'face
+        (let* ((expected (propertize " lordar-mode-line" 'face
                                      'lordar-mode-line-project-root-basename)))
           (expect (lordar-mode-line-segments-project-root-basename " %s")
                   :to-equal expected)))
@@ -199,8 +195,8 @@
         (spy-on 'lordar-mode-line-segments--project-root-buffer-valid-p
                 :and-return-value t)
         (spy-on 'project-current :and-return-value nil)
+        (setq-local lordar-mode-line-segments--project-root-basename nil)
         (let* ((default-directory "~/projects/coding/lordar-mode-line/")
-               (lordar-mode-line-segments--project-root-basename nil)
                (expected (propertize "lordar-mode-line" 'face
                                      'lordar-mode-line-project-root-basename)))
           (expect (lordar-mode-line-segments-project-root-basename)
@@ -211,10 +207,43 @@
                 :and-call-through)
         (lordar-mode-line-segments-project-root-basename)
         (expect 'lordar-mode-line-segments--project-root-basename-update
-                :to-have-been-called-times 0))
+                :to-have-been-called-times 0)))
 
-      )
-    ))
+    (describe "- lordar-mode-line-segments-project-root-relative-directory"
+
+      (it "returns the project root relative directory with the correct face and format"
+        (spy-on 'lordar-mode-line-segments--project-root-buffer-valid-p
+                :and-return-value t)
+        (spy-on 'project-current :and-return-value
+                '(vc Git "~/projects/coding/lordar-mode-line/"))
+        (let* ((default-directory
+                "/home/hubisan/projects/coding/lordar-mode-line/tests/")
+               (expected
+                (propertize " lordar-mode-line/tests" 'face
+                            'lordar-mode-line-project-root-relative-directory)))
+          (expect (lordar-mode-line-segments-project-root-relative-directory
+                   " %s")
+                  :to-equal expected)))
+
+      (it "returns default directory if no project"
+        (spy-on 'lordar-mode-line-segments--project-root-buffer-valid-p
+                :and-return-value t)
+        (spy-on 'project-current :and-return-value nil)
+        (setq-local lordar-mode-line-segments--project-root-relative-directory nil)
+        (let* ((default-directory "~/projects/coding/lordar-mode-line/")
+               (expected
+                (propertize "~/projects/coding/lordar-mode-line" 'face
+                            'lordar-mode-line-project-root-relative-directory)))
+          (expect (lordar-mode-line-segments-project-root-relative-directory)
+                  :to-equal expected)))
+
+      (it "uses the cached value"
+        (spy-on 'lordar-mode-line-segments--project-root-relative-directory-update
+                :and-call-through)
+        (lordar-mode-line-segments-project-root-relative-directory)
+        (expect 'lordar-mode-line-segments--project-root-basename-update
+                :to-have-been-called-times 0))))
+  )
 
 (provide 'test-lordar-mode-line)
 
