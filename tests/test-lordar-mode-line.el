@@ -9,6 +9,8 @@
 
 (require 'lordar-mode-line)
 
+(require 'project)
+
 ;;; Helpers
 
 ;;; Test Segments
@@ -80,17 +82,23 @@
 
       (it "adjusts the height of the mode-line using the default factor"
         (let* ((factor 0.2)
-               (top (propertize " " 'display `((space-width 0.01) (raise ,factor))))
-               (bottom (propertize " " 'display `((space-width 0.01) (raise ,(* -1 factor)))))
-               (expected (propertize (concat top bottom) 'face 'lordar-mode-line-height-adjust)))
+               (top (propertize " " 'display
+                                `((space-width 0.01) (raise ,factor))))
+               (bottom (propertize " " 'display
+                                   `((space-width 0.01) (raise ,(* -1 factor)))))
+               (expected (propertize (concat top bottom) 'face
+                                     'lordar-mode-line-height-adjust)))
           (expect (lordar-mode-line-segments-adjust-height)
                   :to-equal expected)))
 
       (it "adjusts the height of the mode-line using a provided factor"
         (let* ((factor 0.3)
-               (top (propertize " " 'display `((space-width 0.01) (raise ,factor))))
-               (bottom (propertize " " 'display `((space-width 0.01) (raise ,(* -1 factor)))))
-               (expected (propertize (concat top bottom) 'face 'lordar-mode-line-height-adjust)))
+               (top (propertize " " 'display
+                                `((space-width 0.01) (raise ,factor))))
+               (bottom (propertize " " 'display
+                                   `((space-width 0.01) (raise ,(* -1 factor)))))
+               (expected (propertize (concat top bottom) 'face
+                                     'lordar-mode-line-height-adjust)))
           (expect (lordar-mode-line-segments-adjust-height 0.3)
                   :to-equal expected)))))
 
@@ -117,7 +125,8 @@
       (it "returns the major mode name with the correct face and format"
         (setq lordar-mode-line-segments--major-mode nil)
         (spy-on 'format-mode-line :and-return-value "Emacs Lisp")
-        (let* ((expected (propertize " Emacs Lisp" 'face 'lordar-mode-line-major-mode)))
+        (let* ((expected (propertize " Emacs Lisp" 'face
+                                     'lordar-mode-line-major-mode)))
           (expect (lordar-mode-line-segments-major-mode " %s")
                   :to-equal expected)))
 
@@ -133,7 +142,8 @@
       (it "returns the buffer name with the correct face and format"
         (spy-on 'buffer-name :and-return-value "test-buffer")
         (setq lordar-mode-line-segments--buffer-name nil)
-        (let* ((expected (propertize " test-buffer" 'face 'lordar-mode-line-buffer-name)))
+        (let* ((expected (propertize " test-buffer" 'face
+                                     'lordar-mode-line-buffer-name)))
           (expect (lordar-mode-line-segments-buffer-name " %s")
                   :to-equal expected)))
 
@@ -141,7 +151,7 @@
         (spy-on 'lordar-mode-line-segments--buffer-name-update :and-call-through)
         (lordar-mode-line-segments-buffer-name)
         (expect 'lordar-mode-line-segments--buffer-name-update
-          :to-have-been-called-times 0))))
+                :to-have-been-called-times 0))))
 
   (describe "> Buffer Status"
     (describe "- lordar-mode-line-segments-buffer-status"
@@ -158,16 +168,53 @@
 
       (it "returns buffer status with correct face and format when modified"
         (spy-on 'format-mode-line :and-return-value "**")
-        (let* ((expected (propertize " *" 'face 'lordar-mode-line-buffer-status-modified)))
+        (let* ((expected (propertize " *" 'face
+                                     'lordar-mode-line-buffer-status-modified)))
           (expect (lordar-mode-line-segments-buffer-status " %s")
                   :to-equal expected)))
 
       (it "returns buffer status with correct face and format when read-only"
         (spy-on 'format-mode-line :and-return-value "%%")
-        (let* ((expected (propertize "%" 'face 'lordar-mode-line-buffer-status-read-only)))
+        (let* ((expected (propertize "%" 'face
+                                     'lordar-mode-line-buffer-status-read-only)))
           (expect (lordar-mode-line-segments-buffer-status)
+                  :to-equal expected)))))
+
+  (describe "> Project Root"
+    (describe "- lordar-mode-line-segments-project-root-basename"
+
+      (it "returns the project root basename with the correct face and format"
+        (spy-on 'lordar-mode-line-segments--project-root-buffer-valid-p
+                :and-return-value t)
+        (spy-on 'project-current :and-return-value
+                '(vc Git "~/projects/coding/lordar-mode-line/"))
+        (let* ((inhibit-message t)
+               (lordar-mode-line-segments--project-root-basename nil)
+               (expected (propertize " lordar-mode-line" 'face
+                                     'lordar-mode-line-project-root-basename)))
+          (expect (lordar-mode-line-segments-project-root-basename " %s")
                   :to-equal expected)))
-      )))
+
+      (it "returns basename of default directory if no project"
+        (spy-on 'lordar-mode-line-segments--project-root-buffer-valid-p
+                :and-return-value t)
+        (spy-on 'project-current :and-return-value nil)
+        (let* ((default-directory "~/projects/coding/lordar-mode-line/")
+               (lordar-mode-line-segments--project-root-basename nil)
+               (expected (propertize "lordar-mode-line" 'face
+                                     'lordar-mode-line-project-root-basename)))
+          (expect (lordar-mode-line-segments-project-root-basename)
+                  :to-equal expected)))
+
+      (it "uses the cached value"
+        (spy-on 'lordar-mode-line-segments--project-root-basename-update
+                :and-call-through)
+        (lordar-mode-line-segments-project-root-basename)
+        (expect 'lordar-mode-line-segments--project-root-basename-update
+                :to-have-been-called-times 0))
+
+      )
+    ))
 
 (provide 'test-lordar-mode-line)
 
