@@ -243,6 +243,51 @@
         (lordar-mode-line-segments-project-root-relative-directory)
         (expect 'lordar-mode-line-segments--project-root-basename-update
                 :to-have-been-called-times 0))))
+
+  (describe "> Version Control"
+
+    (describe "- lordar-mode-line-segments-vc-branch"
+
+      (before-each
+        (setq vc-mode " Git-develop")
+        (setq buffer-file-name
+              "/home/test//lordar-mode-line/lordar-mode-line-segments")
+        (spy-on 'vc-backend :and-return-value 'Git))
+
+      (it "returns the VC branch with the correct face and format"
+        (setq lordar-mode-line-segments--vc-branch-and-state nil)
+        (let* ((expected (propertize " develop" 'face 'lordar-mode-line-vc-branch)))
+          (expect (lordar-mode-line-segments-vc-branch " %s")
+                  :to-equal expected)))
+
+      (it "uses the cached value"
+        (spy-on 'lordar-mode-line-segments--vc-branch-and-state-update
+                :and-call-through)
+        (lordar-mode-line-segments-vc-branch)
+        (expect 'lordar-mode-line-segments--vc-branch-and-state-update
+                :to-have-been-called-times 0)))
+
+    (describe "- lordar-mode-line-segments-vc-state"
+
+      (before-each
+        (setq vc-mode " Git-develop")
+        (setq buffer-file-name
+              "/home/test//lordar-mode-line/lordar-mode-line-segments")
+        (spy-on 'vc-backend :and-return-value 'Git)
+        (spy-on 'vc-state :and-return-value 'edited))
+
+      (it "returns the VC state with the correct face and format"
+        (setq lordar-mode-line-segments--vc-branch-and-state nil)
+        (let* ((expected (propertize " *" 'face 'lordar-mode-line-vc-state-dirty)))
+          (expect (lordar-mode-line-segments-vc-state " %s")
+                  :to-equal expected)))
+
+      (it "uses the cached value"
+        (spy-on 'lordar-mode-line-segments--vc-branch-and-state-update
+                :and-call-through)
+        (lordar-mode-line-segments-vc-state)
+        (expect 'lordar-mode-line-segments--vc-branch-and-state-update
+                :to-have-been-called-times 0))))
   )
 
 (provide 'test-lordar-mode-line)
