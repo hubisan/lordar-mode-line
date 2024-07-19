@@ -86,8 +86,9 @@
                                    `((space-width 0.01) (raise ,(* -1 factor)))))
                (expected (propertize (concat top bottom) 'face
                                      'lordar-mode-line-height-adjust)))
-          (expect (lordar-mode-line-segments-adjust-height)
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-adjust-height)))))
 
       (it "adjusts the height of the mode-line using a provided factor"
         (let* ((factor 0.3)
@@ -97,8 +98,9 @@
                                    `((space-width 0.01) (raise ,(* -1 factor)))))
                (expected (propertize (concat top bottom) 'face
                                      'lordar-mode-line-height-adjust)))
-          (expect (lordar-mode-line-segments-adjust-height 0.3)
-                  :to-equal expected)))))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-adjust-height 0.3)))))))
 
   (describe "> Vertical Space"
     (describe "- lordar-mode-line-segments-vertical-space"
@@ -107,15 +109,17 @@
         (let* ((width 1.0)
                (expected (propertize " " 'display `((space-width ,width))
                                      'face 'lordar-mode-line-vertical-space)))
-          (expect (lordar-mode-line-segments-vertical-space)
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-vertical-space)))))
 
       (it "creates vertical space with provided width"
         (let* ((width 2.0)
                (expected (propertize " " 'display `((space-width ,width))
                                      'face 'lordar-mode-line-vertical-space)))
-          (expect (lordar-mode-line-segments-vertical-space 2.0)
-                  :to-equal expected)))))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-vertical-space 2.0)))))))
 
   (describe "> Major Mode"
     (describe "- lordar-mode-line-segments-major-mode"
@@ -125,8 +129,9 @@
         (setq-local lordar-mode-line-segments--major-mode nil)
         (let* ((expected (propertize " Emacs Lisp" 'face
                                      'lordar-mode-line-major-mode)))
-          (expect (lordar-mode-line-segments-major-mode " %s")
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-major-mode " %s")))))
 
       (it "uses the cached value"
         (spy-on 'lordar-mode-line-segments--major-mode-update :and-call-through)
@@ -142,8 +147,9 @@
         (setq-local lordar-mode-line-segments--buffer-name nil)
         (let* ((expected (propertize " test-buffer" 'face
                                      'lordar-mode-line-buffer-name)))
-          (expect (lordar-mode-line-segments-buffer-name " %s")
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-buffer-name " %s")))))
 
       (it "uses the cached value"
         (spy-on 'lordar-mode-line-segments--buffer-name-update :and-call-through)
@@ -168,15 +174,17 @@
         (spy-on 'format-mode-line :and-return-value "**")
         (let* ((expected (propertize " *" 'face
                                      'lordar-mode-line-buffer-status-modified)))
-          (expect (lordar-mode-line-segments-buffer-status " %s")
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-buffer-status " %s")))))
 
       (it "returns buffer status with correct face and format when read-only"
         (spy-on 'format-mode-line :and-return-value "%%")
         (let* ((expected (propertize "%" 'face
                                      'lordar-mode-line-buffer-status-read-only)))
-          (expect (lordar-mode-line-segments-buffer-status)
-                  :to-equal expected)))))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-buffer-status)))))))
 
   (describe "> Project Root"
     (describe "- lordar-mode-line-segments-project-root-basename"
@@ -188,8 +196,9 @@
                 '(vc Git "~/projects/coding/lordar-mode-line/"))
         (let* ((expected (propertize " lordar-mode-line" 'face
                                      'lordar-mode-line-project-root-basename)))
-          (expect (lordar-mode-line-segments-project-root-basename " %s")
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-project-root-basename " %s")))))
 
       (it "returns basename of default directory if no project"
         (spy-on 'lordar-mode-line-segments--project-root-buffer-valid-p
@@ -199,8 +208,9 @@
         (let* ((default-directory "~/projects/coding/lordar-mode-line/")
                (expected (propertize "lordar-mode-line" 'face
                                      'lordar-mode-line-project-root-basename)))
-          (expect (lordar-mode-line-segments-project-root-basename)
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-project-root-basename)))))
 
       (it "uses the cached value"
         (spy-on 'lordar-mode-line-segments--project-root-basename-update
@@ -220,9 +230,10 @@
                (expected
                 (propertize " lordar-mode-line/tests" 'face
                             'lordar-mode-line-project-root-relative-directory)))
-          (expect (lordar-mode-line-segments-project-root-relative-directory
-                   " %s")
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-project-root-relative-directory
+                    " %s")))))
 
       (it "returns default directory if no project"
         (spy-on 'lordar-mode-line-segments--project-root-buffer-valid-p
@@ -233,8 +244,9 @@
                (expected
                 (propertize "~/projects/coding/lordar-mode-line" 'face
                             'lordar-mode-line-project-root-relative-directory)))
-          (expect (lordar-mode-line-segments-project-root-relative-directory)
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-project-root-relative-directory)))))
 
       (it "uses the cached value"
         (spy-on 'lordar-mode-line-segments--project-root-relative-directory-update
@@ -256,8 +268,9 @@
       (it "returns the VC branch with the correct face and format"
         (setq lordar-mode-line-segments--vc-branch-and-state nil)
         (let* ((expected (propertize " develop" 'face 'lordar-mode-line-vc-branch)))
-          (expect (lordar-mode-line-segments-vc-branch " %s")
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-vc-branch " %s")))))
 
       (it "uses the cached value"
         (spy-on 'lordar-mode-line-segments--vc-branch-and-state-update
@@ -278,8 +291,9 @@
       (it "returns the VC state with the correct face and format"
         (setq lordar-mode-line-segments--vc-branch-and-state nil)
         (let* ((expected (propertize " *" 'face 'lordar-mode-line-vc-state-dirty)))
-          (expect (lordar-mode-line-segments-vc-state " %s")
-                  :to-equal expected)))
+          (should (equal-including-properties
+                   expected
+                   (lordar-mode-line-segments-vc-state " %s")))))
 
       (it "uses the cached value"
         (spy-on 'lordar-mode-line-segments--vc-branch-and-state-update
@@ -287,6 +301,30 @@
         (lordar-mode-line-segments-vc-state)
         (expect 'lordar-mode-line-segments--vc-branch-and-state-update
                 :to-have-been-called-times 0))))
+
+  (describe "> Input Method"
+
+    (describe "- lordar-mode-line-segments-input-method"
+
+      (it "returns the input methodh with the correct face and format"
+
+        (let* ((inhibit-message t))
+          (set-input-method "german")
+          (should (equal-including-properties
+                   (propertize " DE@" 'face 'lordar-mode-line-input-method)
+                   (lordar-mode-line-segments-input-method " %s")))))))
+
+  ;; (describe "> Syntax Checking"
+
+  ;;   (describe "- lordar-mode-line-segments-input-method"
+
+  ;;     (it "returns the input methodh with the correct face and format"
+
+  ;;       (let* ((inhibit-message t))
+  ;;         (set-input-method "german")
+  ;;         (should (equal-including-properties
+  ;;                  (propertize " DE@" 'face 'lordar-mode-line-input-method)
+  ;;                  (lordar-mode-line-segments-input-method " %s")))))))
   )
 
 (provide 'test-lordar-mode-line)
