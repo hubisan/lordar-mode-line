@@ -216,8 +216,7 @@
                 :and-return-value t)
         (spy-on 'project-current :and-return-value
                 '(vc Git "~/projects/coding/lordar-mode-line/"))
-        (let* ((default-directory
-                "/home/hubisan/projects/coding/lordar-mode-line/tests/")
+        (let* ((default-directory "~/projects/coding/lordar-mode-line/tests/")
                (expected
                 (propertize " lordar-mode-line/tests" 'face
                             'lordar-mode-line-project-root-relative-directory)))
