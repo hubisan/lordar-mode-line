@@ -364,7 +364,18 @@
         (should (equal-including-properties
                  (propertize "Notes: 0" 'face 'lordar-mode-line-syntax-checking-note)
                  (lordar-mode-line-segments-syntax-checking-note-counter "Notes: %s" t nil))))
-      )))
+
+      (it "uses the cached value"
+          (spy-on 'lordar-mode-line-segments--syntax-checking-counters-update
+                  :and-call-through)
+          (lordar-mode-line-segments-syntax-checking-note-counter)
+          (expect 'lordar-mode-line-segments--syntax-checking-counters-update
+                  :to-have-been-called-times 0))))
+
+  ;; Not testing evil state as it uses the function directly.
+
+  ;; Same for winum.
+  )
 
 (provide 'test-lordar-mode-line)
 
