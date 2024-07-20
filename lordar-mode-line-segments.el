@@ -572,20 +572,6 @@ Use FORMAT-STRING to change the output."
 
 ;;;; Segment Syntax-Checking
 
-(defcustom lordar-mode-line-syntax-checking-show-zero-counter nil
-  "If nil don't show zero counters.
-You can overwrite this behaviour also in each counters functions."
-  :group 'lordar-mode-line
-  :type 'boolean)
-
-(defcustom lordar-mode-line-syntax-checking-use-zero-faces t
-  "When non-nil use special faces if a counter is zero.
-Uses faces `lordar-mode-line-syntax-checking-zero-counter' and
-`lordar-mode-line-syntax-checking-zero-counter-inactive'.
-You can overwrite this behaviour also in each counters functions."
-  :group 'lordar-mode-line
-  :type 'boolean)
-
 (defface lordar-mode-line-syntax-checking-error
   '((t (:inherit lordar-mode-line-error)))
   "Face used to display syntax-checking errors in the mode line."
@@ -667,9 +653,7 @@ You can overwrite this behaviour also in each counters functions."
   "Returns the number or errors for TYPE formatted for mode line.
 TYPE is :error, :warning or :note. Use FORMAT-STRING to change the
 output. If SHOW-ZERO is non-nil then also show the counter if it is
-zero, uses `lordar-mode-line-syntax-checking-show-zero-counter' if not
-set. If USE-ZERO-FACES is non-nil then use special faces for zero count,
-uses `lordar-mode-line-syntax-checking-use-zero-faces' if not set."
+zero. If USE-ZERO-FACES is non-nil then use special faces for zero count."
   (unless lordar-mode-line-segments--syntax-checking-counters
     (lordar-mode-line-segments--syntax-checking-counters-update))
   (when-let ((counters lordar-mode-line-segments--syntax-checking-counters)
@@ -677,18 +661,14 @@ uses `lordar-mode-line-syntax-checking-use-zero-faces' if not set."
                        ((eq type :error) (nth 0 counters))
                        ((eq type :warning) (nth 1 counters))
                        ((eq type :note) (nth 2 counters)))))
-    (let* ((is-not-0 (> (string-to-number counter) 0))
-           (show-zero (or show-zero
-                          lordar-mode-line-syntax-checking-show-zero-counter))
-           (use-zero-faces (or use-zero-faces
-                               lordar-mode-line-syntax-checking-use-zero-faces)))
+    (let* ((is-not-0 (> (string-to-number counter) 0)))
       (when-let* ((counter-formatted
                    (when (or is-not-0 show-zero)
                      (if format-string
                          (format format-string counter)
                        counter)))
                   (face (if (and (not is-not-0) use-zero-faces)
-                            'syntax-checking-0-counter
+                            'syntax-checking-zero-counter
                           (cond
                            ((eq type :error) 'syntax-checking-error)
                            ((eq type :warning) 'syntax-checking-warning)

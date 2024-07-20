@@ -10,6 +10,10 @@
 (require 'lordar-mode-line)
 
 (require 'project)
+(require 'flymake)
+
+(defvar test-buffer nil
+  "Buffer for testing stuff inside.")
 
 ;;; Helpers
 
@@ -69,6 +73,8 @@
     (it "raises an error when the key doesn't exist in the symbols alist"
       (expect (lordar-mode-line-segments--get-symbol 'non-existent-key 'buffer-status)
               :to-throw 'user-error))))
+
+;;;; Segments
 
 (describe ">>> SEGMENTS\n"
 
@@ -314,18 +320,51 @@
                    (propertize " DE@" 'face 'lordar-mode-line-input-method)
                    (lordar-mode-line-segments-input-method " %s")))))))
 
-  ;; (describe "> Syntax Checking"
+  (describe "> Syntax Checking"
 
-  ;;   (describe "- lordar-mode-line-segments-input-method"
+    (before-all
+      (setq warning-minimum-log-level :error)
+      (setq test-buffer (generate-new-buffer "test-lordar-mode-line.el"))
+      (switch-to-buffer test-buffer)
+      (emacs-lisp-mode)
+      (flymake-mode 1)
+      (insert "sdjdfsj\n(require 'nonexistant\n")
+      (flymake-start)
+      (sleep-for 1))
 
-  ;;     (it "returns the input methodh with the correct face and format"
+    (after-all
+      (kill-buffer test-buffer)
+      (setq warning-minimum-log-level :warning))
 
-  ;;       (let* ((inhibit-message t))
-  ;;         (set-input-method "german")
-  ;;         (should (equal-including-properties
-  ;;                  (propertize " DE@" 'face 'lordar-mode-line-input-method)
-  ;;                  (lordar-mode-line-segments-input-method " %s")))))))
-  )
+    (describe "- lordar-mode-line-segments-syntax-checking-error-counter"
+
+      (it "returns the error counter with correct format"
+        (should (equal-including-properties
+                 (propertize "Errors: 1" 'face 'lordar-mode-line-syntax-checking-error)
+                 (lordar-mode-line-segments-syntax-checking-error-counter "Errors: %s")))))
+
+    (describe "- lordar-mode-line-segments-syntax-checking-warning-counter"
+
+      (it "returns the warning counter with correct format"
+        (should (equal-including-properties
+                 (propertize "Warnings: 2" 'face 'lordar-mode-line-syntax-checking-warning)
+                 (lordar-mode-line-segments-syntax-checking-warning-counter "Warnings: %s")))))
+
+    (describe "- lordar-mode-line-segments-syntax-checking-note-counter"
+
+      (it "returns nil if an error type has zero counts"
+        (expect (lordar-mode-line-segments-syntax-checking-note-counter "Notes: %s") :to-be nil))
+
+      (it "returns zero if variable is set to allow it and use special face for zero"
+        (should (equal-including-properties
+                 (propertize "Notes: 0" 'face 'lordar-mode-line-syntax-checking-zero-counter)
+                 (lordar-mode-line-segments-syntax-checking-note-counter "Notes: %s" t t))))
+
+      (it "returns zero if variable is set to allow it and normal face for zero"
+        (should (equal-including-properties
+                 (propertize "Notes: 0" 'face 'lordar-mode-line-syntax-checking-note)
+                 (lordar-mode-line-segments-syntax-checking-note-counter "Notes: %s" t nil))))
+      )))
 
 (provide 'test-lordar-mode-line)
 
