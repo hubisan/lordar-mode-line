@@ -383,6 +383,60 @@
   ;; Same for winum.
   )
 
+;;; Test Main Functions
+
+(describe ">>> MAIN FUNCTIONS\n"
+
+  (describe "- lordar-mode-line-mode"
+
+    :var ((minimal-format
+           `("%e" (:eval (lordar-mode-line--construct-string
+                          ',lordar-mode-line-minimal-segments)))))
+
+    (it "activates and deactivates correctly"
+      (expect lordar-mode-line-mode :to-be nil)
+      (lordar-mode-line-mode 1)
+      (expect lordar-mode-line-mode :to-be t)
+      (lordar-mode-line-mode -1)
+      (expect lordar-mode-line-mode :to-be nil))
+
+    (it "sets the mode line correctly"
+      (lordar-mode-line-set-mode-line lordar-mode-line-minimal-segments)
+      (expect mode-line-format :to-equal minimal-format))
+
+    (it "sets major mode specific segments"
+      (lordar-mode-line-mode 1)
+      (with-current-buffer (get-buffer-create "*test-lordar-mode-line*")
+        (special-mode)
+        (expect mode-line-format :to-equal minimal-format)))
+
+    (it "sets up hooks correctly"
+      (lordar-mode-line-mode 1)
+      (expect (memq 'lordar-mode-line--set-major-mode-specific
+                    (default-value 'find-file-hook))
+              :to-be-truthy)
+      (expect (memq 'lordar-mode-line--set-major-mode-specific
+                    (default-value 'after-change-major-mode-hook))
+              :to-be-truthy)
+      (expect (memq 'lordar-mode-line-segments--vc-branch-and-state-update
+                    (default-value 'find-file-hook))
+              :to-be-truthy)
+      (expect (memq 'lordar-mode-line-segments--vc-branch-and-state-update
+                    (default-value 'after-save-hook))
+              :to-be-truthy))
+
+    (it "sets up advices correctly"
+      (lordar-mode-line-mode 1)
+      (expect (advice-member-p 'lordar-mode-line-segments--vc-branch-and-state-update
+                               'vc-refresh-state)
+              :to-be-truthy)
+      (expect (advice-member-p 'lordar-mode-line-segments--syntax-checking-counters-update
+                               'flymake--handle-report)
+              :to-be-truthy)
+      (expect (advice-member-p 'lordar-mode-line-segments--syntax-checking-counters-update
+                               'flymake-start)
+              :to-be-truthy))))
+
 (provide 'test-lordar-mode-line)
 
 ;;; test-lordar-mode-line.el ends here
