@@ -8,9 +8,9 @@ A minimal mode line for Emacs.
 
 ** Main features                                                :noexport_0:
 
-- =Lordar-mode-line= includes only a few built-in segments.
+- =Lordar-mode-line= includes only a few segments.
 - There is a default mode line format, one for ~prog-mode~ and a minimal one for special buffers. You can disable/customize these or add your own.
-- To share a segment, write an extension (package). I don't plan to add more segments to the code base to keep it small.
+- To share a segment, write a new extension (package). I don't plan to add more segments to the code base to keep it small.
 
 -----
 
@@ -69,9 +69,9 @@ The following segments are available:
   
 - lordar-mode-line-segments-syntax-checking-note-counter (&optional format-string show-zero use-zero-faces) :: Return the note counter report by enabled syntax checker. Use format-string to change the output. If show-zero is non-nil then also show the counter if it is zero. If use-zero-faces is non-nil then use special faces for zero count.
 
-- glordar-mode-line-segments-evil-state (&optional format-string) :: Return the value of evil-mode-line-tag. Use format-string to change the output.
+- lordar-mode-line-segments-evil-state (&optional format-string) :: Return the value of evil-mode-line-tag. Use format-string to change the output.
   
-- glordar-mode-line-segments-winum (&optional format-string) :: Return the winum number string for the mode line. Use format-string to change the output.
+- lordar-mode-line-segments-winum (&optional format-string) :: Return the winum number string for the mode line. Use format-string to change the output.
 
 ** Customization
 :PROPERTIES:
