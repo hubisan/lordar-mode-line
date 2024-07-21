@@ -9,14 +9,8 @@ A minimal mode line for Emacs.
 ** Main features                                                :noexport_0:
 
 - =Lordar-mode-line= includes only a few built-in segments.
-
-- You can add your own segments, see the documentation for [[#custom-segments][instructions]].
-
-- To share a segment, write an extension (package) or make a pull request and add it to [[file:custom-segments/custom-segments.org][custom-segments.org]]. I don't plan to add more segments to the code base to keep it small.
-
-- By default, some major-mode-specific mode-line formats are defined and set up using major-mode hooks. You can disable/customize these or add your own.
-
--  Requires Emacs 30.
+- There is a default mode line format, one for ~prog-mode~ and a minimal one for special buffers. You can disable/customize these or add your own.
+- To share a segment, write an extension (package). I don't plan to add more segments to the code base to keep it small.
 
 -----
 
@@ -34,16 +28,65 @@ A minimal mode line for Emacs.
 :CUSTOM_ID: installation
 :END:
 
-# Describe how to install this package.
-
-*** Dependencies
+This package is hosted on Github. Use your favourite way to install like [[https://github.com/progfolio/elpaca][Elpaca]], [[https://github.com/radian-software/straight.el][Straight]], [[https://github.com/quelpa/quelpa][Quelpa]]. Starting with Emacs 29 ~package-vc-install~ may be used.
 
 ** Usage
 :PROPERTIES:
 :CUSTOM_ID: usage
 :END:
 
-# Describe the usage.
+To activate the mode line use ~lordar-mode-line-mode~. This will setup up the default mode line, a mode line for ~prog-mode~, and a minimal mode line for special buffers.
+
+To define a custom mode line with the segments provided modify ~lordar-mode-line-major-mode-definitions~ (see [[#customization][Customization]]) or use ~lordar-mode-line-set-mode-line~ directly.
+
+*** Segments
+
+The following segments are available:
+
+- ~lordar-mode-line-segments-adjust-height (&optional factor)~
+  Adjust the mode-line height by a factor using invisible spaces. If factor is not set it uses ~lordar-mode-line-segments-adjust-height~.
+  
+- ~lordar-mode-line-segments-vertical-space (&optional width)~
+  Vertical space with space-width set to width. If width is nil, set it to 1.
+  
+- ~lordar-mode-line-segments-major-mode (&optional format-string)~
+  Return the pretty name of the current buffer's major mode. Use format-string to change the output format.
+  
+- ~lordar-mode-line-segments-buffer-name (&optional format-string)~
+  Return the name of the current buffer. Use format-string to change the output.
+  
+- ~lordar-mode-line-segments-buffer-status (&optional format-string)~
+  Return an indicator representing the status of the current buffer. Uses symbols defined in ~lordar-mode-line-buffer-status-symbols~. Use format-string to change the output format.
+  
+- ~lordar-mode-line-segments-project-root-basename (&optional format-string)~
+  Return the project root basename. If not in a project the basename of ~default-directory~ is returned. Use format-string to change the output.
+  
+- ~lordar-mode-line-segments-project-root-relative-directory (&optional format-string)~
+  Return the directory path relative to the root of the project. If not in a project, the ~default-directory~ is returned. Use format-string to change the output format.
+  
+- ~lordar-mode-line-segments-vc-branch (&optional format-string)~
+  Return the vc branch formatted to display in the mode line. Use format-string to change the output.
+  
+- ~lordar-mode-line-segments-vc-state (&optional format-string)~
+  Return an indicator representing the vc status of the current buffer. Use format-string to change the output. The indicators defined in ~lordar-mode-line-vc-state-symbols~ are used.
+  
+- ~lordar-mode-line-segments-input-method (&optional format-string)~
+  Return the current input method. Use format-string to change the output.
+  
+- ~lordar-mode-line-segments-syntax-checking-error-counter (&optional format-string show-zero use-zero-faces)~
+  Return the errors counter report by enabled syntax checker. Use format-string to change the output. If show-zero is non-nil then also show the counter if it is zero. If use-zero-faces is non-nil then use special faces for zero count. 
+  
+- ~lordar-mode-line-segments-syntax-checking-warning-counter (&optional format-string show-zero use-zero-faces~
+  Return the warnings counter report by enabled syntax checker. Use format-string to change the output. If show-zero is non-nil then also show the counter if it is zero. If use-zero-faces is non-nil then use special faces for zero count. 
+  
+- ~lordar-mode-line-segments-syntax-checking-note-counter (&optional format-string show-zero use-zero-faces)~
+  Return the note counter report by enabled syntax checker. Use format-string to change the output. If show-zero is non-nil then also show the counter if it is zero. If use-zero-faces is non-nil then use special faces for zero count. 
+  
+- ~lordar-mode-line-segments-evil-state (&optional format-string)~
+  Return the value of ~evil-mode-line-tag~. Use format-string to change the output.
+  
+- ~lordar-mode-line-segments-winum (&optional format-string)~
+  Return the winum number string for the mode line. Use format-string to change the output.
 
 ** Customization
 :PROPERTIES:
@@ -54,22 +97,32 @@ A minimal mode line for Emacs.
 
 Set the following variables to change the behaviour of the package:
 
-- ~mode-line-right-align-edge~ (window)
-  You might have to modify the built-in variable ~mode-line-right-align-edge~ to make the alignment to right of the second part of the mode line work.
+- ~lordar-mode-line-default-segments~ 
+  Default segments used for the mode line.
+
+- ~lordar-mode-line-prog-mode-segments~
+  Segments used for the mode line in `prog-mode'. 
+
+- ~lordar-mode-line-minimal-segments~
+  Minimal segments for mode like `special-mode`.
+
+- ~lordar-mode-line-major-mode-definitions~
+  Definition of mode line segments to use per major mode. Each key can be a single major mode symbol or a list of major mode symbols. The corresponding value must be a variable containing the segments. By default a major mode specific mode line is used for prog-mode and for some special modes.
+  
+- ~lordar-mode-line-height-adjust-factor~
+  Default factor to use for ~lordar-mode-line-segments-adjust-height~.
+
+- ~lordar-mode-line-buffer-status-symbols~
+  Symbols for buffer status (segment: lordar-mode-line-segments-buffer-status) in the mode line. Each entry is a cons cell with a keyword and a corresponding string.
+    
+- ~lordar-mode-line-vc-state-symbols~
+  Symbols for buffer status in the mode line. Each entry is a cons cell with a keyword and a corresponding string.
 
 *** Faces
 
-The following faces are defined:
+For each segment there is a normal and an inactive face. Like this it is possible to style each segment separately and to style differently whether the mode line is active or not.
 
-| Face | Description |
-|------+-------------|
-|      |             |
-|      |             |
-
-** Custom Segments
-:PROPERTIES:
-:CUSTOM_ID: custom-segments
-:END:
+To see the faces just use ~customize-group~ and select ~lordar-mode-line-faces~.
 
 ** Changelog
 :PROPERTIES:

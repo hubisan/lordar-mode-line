@@ -407,6 +407,14 @@ Set vc branch text as car and vc state symbol as cdr."
   "Face used to display the vc branch name in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
+(defun lordar-mode-line-segments--vc-branch-get ()
+  "Return the vc branch name for the current buffer."
+  (when (and vc-mode buffer-file-name)
+    (when-let* ((backend (vc-backend buffer-file-name)))
+      (cond
+       ((equal backend 'Git) (substring-no-properties vc-mode 5))
+       ((equal backend 'Hg) (substring-no-properties vc-mode 4))))))
+
 (defun lordar-mode-line-segments-vc-branch (&optional format-string)
   "Return the vc branch formatted to display in the mode line.
 Use FORMAT-STRING to change the output."
@@ -417,14 +425,6 @@ Use FORMAT-STRING to change the output."
                                     (format format-string branch)
                                   branch)))
     (lordar-mode-line-segments--propertize branch-formatted 'vc-branch)))
-
-(defun lordar-mode-line-segments--vc-branch-get ()
-  "Return the vc branch name for the current buffer."
-  (when (and vc-mode buffer-file-name)
-    (when-let* ((backend (vc-backend buffer-file-name)))
-      (cond
-       ((equal backend 'Git) (substring-no-properties vc-mode 5))
-       ((equal backend 'Hg) (substring-no-properties vc-mode 4))))))
 
 ;;;;; Version Control State
 
@@ -447,8 +447,7 @@ Use FORMAT-STRING to change the output."
     ;; Will be used for the other states.
     (default . nil))
   "Symbols for buffer status in the mode line.
-Each entry is a cons cell with a keyword and a corresponding string.
-Valid keywords are:"
+Each entry is a cons cell with a keyword and a corresponding string."
   :group 'lordar-mode-line
   :type '(alist :tag "String"
                 :key-type
@@ -531,7 +530,7 @@ Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
             (t 'vc-state)))))
 
 (defun lordar-mode-line-segments-vc-state (&optional format-string)
-  "Return an indicator representing the status of the current buffer.
+  "Return an indicator representing the vc status of the current buffer.
 Use FORMAT-STRING to change the output."
   (unless lordar-mode-line-segments--vc-branch-and-state
     (lordar-mode-line-segments--vc-branch-and-state-update))

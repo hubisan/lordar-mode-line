@@ -122,8 +122,7 @@ Some segment functions support additional arguments."
 (defcustom lordar-mode-line-major-mode-definitions
   '((prog-mode . lordar-mode-line-prog-mode-segments)
     ((Info-mode ibuffer-mode special-mode) . lordar-mode-line-minimal-segments))
-  "Definition of mode line segments to use per major mode and as default.
-The major mode specific segments are added using major mode hooks.
+  "Definition of mode line segments to use per major mode.
 Each key can be a single major mode symbol or a list of major mode symbols.
 The corresponding value must be a variable containing the segments."
   :group 'lordar-mode-line
