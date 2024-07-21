@@ -33,7 +33,7 @@ Uses [[https://emacs-eask.github.io/Getting-Started/Introduction/][Eask]], which
 
 **** Testing locally
 
-To test the package locally, call the Makefile target ~make test-local~.
+To test (lint & run tests) the package locally, call the Makefile target ~make test-local~.
 
 To open Emacs with just the package installed run ~make emacs~. Like this you can test it interactively.
 
@@ -49,7 +49,7 @@ When using ~make lint~, the following linters are used:
 - indent-lint 
 - relint
 
-If you want to use another linter or call a linter separately, use ~eask lint <name of linter>~. To get the names just run ~eask lint~.
+If you want to use another linter or call a linter separately, use ~eask lint <name of linter>~. To get the available linters run ~eask lint~.
 
 ***** Test in Specific Emacs Version
 

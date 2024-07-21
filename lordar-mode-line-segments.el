@@ -77,7 +77,7 @@ If FACE is nil, use the default face."
   "Return the symbol associated with KEY from SYMBOLS alist.
 SYMBOLS is the symbol without the prefix lordar-mode-line and without
 the symbols suffix. For instance, buffer-status gets turned into
-lordar-mode-line-buffer-status-symbols."
+`lordar-mode-line-buffer-status-symbols'."
   (let* ((symbols-string (concat "lordar-mode-line-" (symbol-name symbols)
                                  "-symbols"))
          (symbols-alist (symbol-value (intern-soft symbols-string))))
@@ -720,7 +720,7 @@ For FORMAT-STRING, SHOW-ZERO and USE-ZERO-FACES see
 (defun lordar-mode-line-segments-evil-state (&optional format-string)
   "Return the value of `evil-mode-line-tag'.
 Use FORMAT-STRING to change the output."
-  (when evil-mode
+  (when (bound-and-true-p evil-mode)
     (when-let* ((evil-tag (eval evil-mode-line-tag))
                 (evil-tag-formatted (if format-string
                                         (format format-string evil-tag)
@@ -743,7 +743,7 @@ Use FORMAT-STRING to change the output."
   "Return the winum number string for the mode line.
 Use FORMAT-STRING to change the output."
   (setq winum-auto-setup-mode-line nil)
-  (when winum-mode
+  (when (bound-and-true-p winum-mode)
     (when-let* ((nr (winum-get-number-string))
                 (nr-formatted (if format-string
                                   (format format-string nr)

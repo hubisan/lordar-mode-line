@@ -64,15 +64,15 @@ ifndef emacs
 endif
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> COMPILE'
 	$(EASK) docker $(emacs) recompile
-	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> TEST'
-	$(EASK) docker $(emacs) test buttercup
-	$(EASK) docker $(emacs) clean autoloads
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> LINT'
+	$(EASK) docker $(emacs) clean autoloads
 	$(EASK) docker $(emacs) lint package --verbose 0
 	$(EASK) docker $(emacs) lint elint --verbose 0
 	$(EASK) docker $(emacs) lint checkdoc --verbose 0
 	$(EASK) docker $(emacs) lint indent --verbose 0
 	$(EASK) docker $(emacs) lint regexps --verbose 0
+	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> TEST'
+	$(EASK) docker $(emacs) test buttercup
 
 emacs:
 	@printf '\n\e[1;34m%-10s\e[0m\n\n' '>> RUN EMACS'
