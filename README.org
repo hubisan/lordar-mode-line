@@ -61,7 +61,8 @@ The following segments are available:
 - ~lordar-mode-line-segments-project-root-basename (&optional format-string)~
   Return the project root basename. If not in a project the basename of ~default-directory~ is returned. Use format-string to change the output.
   
-- ~lordar-mode-line-segments-project-root-relative-directory (&optional format-string)~
+- ~lordar-mode-line-segments-project-root-relative-directory
+  (&optional format-string)~
   Return the directory path relative to the root of the project. If not in a project, the ~default-directory~ is returned. Use format-string to change the output format.
   
 - ~lordar-mode-line-segments-vc-branch (&optional format-string)~
@@ -73,13 +74,16 @@ The following segments are available:
 - ~lordar-mode-line-segments-input-method (&optional format-string)~
   Return the current input method. Use format-string to change the output.
   
-- ~lordar-mode-line-segments-syntax-checking-error-counter (&optional format-string show-zero use-zero-faces)~
+- ~lordar-mode-line-segments-syntax-checking-error-counter
+  (&optional format-string show-zero use-zero-faces)~
   Return the errors counter report by enabled syntax checker. Use format-string to change the output. If show-zero is non-nil then also show the counter if it is zero. If use-zero-faces is non-nil then use special faces for zero count. 
   
-- ~lordar-mode-line-segments-syntax-checking-warning-counter (&optional format-string show-zero use-zero-faces~
+- ~lordar-mode-line-segments-syntax-checking-warning-counter
+  (&optional format-string show-zero use-zero-faces~
   Return the warnings counter report by enabled syntax checker. Use format-string to change the output. If show-zero is non-nil then also show the counter if it is zero. If use-zero-faces is non-nil then use special faces for zero count. 
   
-- ~lordar-mode-line-segments-syntax-checking-note-counter (&optional format-string show-zero use-zero-faces)~
+- ~lordar-mode-line-segments-syntax-checking-note-counter
+  (&optional format-string show-zero use-zero-faces)~
   Return the note counter report by enabled syntax checker. Use format-string to change the output. If show-zero is non-nil then also show the counter if it is zero. If use-zero-faces is non-nil then use special faces for zero count. 
   
 - ~lordar-mode-line-segments-evil-state (&optional format-string)~
