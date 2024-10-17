@@ -742,7 +742,8 @@ Use FORMAT-STRING to change the output."
   "Return the winum number string for the mode line.
 Use FORMAT-STRING to change the output."
   (setq winum-auto-setup-mode-line nil)
-  (when (bound-and-true-p winum-mode)
+  (when (and (featurep 'winum)
+             (bound-and-true-p winum-mode))
     (when-let* ((nr (winum-get-number-string))
                 (nr-formatted (if format-string
                                   (format format-string nr)
