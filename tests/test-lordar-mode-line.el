@@ -337,6 +337,7 @@
         (insert "sdjdfsj\n(require 'nonexistant\n")
         (setq-local untrusted-content nil)
         (flymake-start)
+        (setq-local untrusted-content nil)
         (sleep-for 1))
 
       (after-all
