@@ -334,6 +334,7 @@
         (switch-to-buffer test-buffer)
         (emacs-lisp-mode)
         (flymake-mode 1)
+        (setq-local elisp-flymake-byte-compile t)
         (insert "sdjdfsj\n(require 'nonexistant\n")
         (flymake-start)
         (sleep-for 1))
