@@ -136,12 +136,12 @@ The corresponding value must be a variable containing the segments."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-warning
-  '((t (:inherit (lordar-mode-line warning))))
+  '((t (:inherit (warning lordar-mode-line))))
   "Default face used for a warnings in the mode line."
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-error
-  '((t (:inherit (lordar-mode-line error))))
+  '((t (:inherit (error lordar-mode-line))))
   "Default face used for an errors in the mode line."
   :group 'lordar-mode-line-faces)
 

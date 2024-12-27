@@ -217,7 +217,7 @@ Valid keywords are:
   :group 'lordar-mode-line-faces)
 
 (defface lordar-mode-line-buffer-status-modified
-  '((t (:inherit (lordar-mode-line-error))))
+  '((t (:inherit lordar-mode-line-error)))
   "Face used to display the modified status in the mode line."
   :group 'lordar-mode-line-faces)
 
