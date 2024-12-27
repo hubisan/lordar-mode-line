@@ -23,35 +23,35 @@
 
 (describe ">>> SEGMENTS AUXILIARY FUNCTIONS\n"
 
-  (describe "- lordar-mode-line-segments--get-face"
+  (describe "- lordar-mode-line--segments-get-face"
     :var ((face 'buffer-name))
     (before-each
-      (setq-local lordar-mode-line-segments--face-cache
+      (setq-local lordar-mode-line--segments-face-cache
                   (make-hash-table :test 'equal))
       (spy-on 'mode-line-window-selected-p :and-return-value t)
       (spy-on 'intern-soft :and-call-through))
 
     (it "returns the active face when face is provided and window is active"
-      (expect (lordar-mode-line-segments--get-face face)
+      (expect (lordar-mode-line--segments-get-face face)
               :to-be 'lordar-mode-line-buffer-name))
 
     (it "returns the inactive face when face is provided and window is inactive"
       (spy-on 'mode-line-window-selected-p :and-return-value nil)
-      (expect (lordar-mode-line-segments--get-face face)
+      (expect (lordar-mode-line--segments-get-face face)
               :to-be 'lordar-mode-line-buffer-name-inactive))
 
     (it "returns the default active face when no face is provided and window is active"
-      (expect (lordar-mode-line-segments--get-face)
+      (expect (lordar-mode-line--segments-get-face)
               :to-be 'lordar-mode-line))
 
     (it "returns the default inactive face when no face is provided and window is inactive"
       (spy-on 'mode-line-window-selected-p :and-return-value nil)
-      (expect (lordar-mode-line-segments--get-face)
+      (expect (lordar-mode-line--segments-get-face)
               :to-be 'lordar-mode-line-inactive))
 
     (it "caches the face names to avoid repeated intern-soft calls"
-      (lordar-mode-line-segments--get-face face)
-      (lordar-mode-line-segments--get-face face)
+      (lordar-mode-line--segments-get-face face)
+      (lordar-mode-line--segments-get-face face)
       (expect 'intern-soft :to-have-been-called-times 1)))
 
   (describe "- lordar-mode-line-segments--get-symbol"

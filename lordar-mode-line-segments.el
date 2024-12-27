@@ -47,31 +47,9 @@
   (declare-function winum-get-number-string "ext:winum")
   (declare-function flymake--severity "ext:flymake"))
 
+(require 'lordar-mode-line-core)
+
 ;;;; Segments Auxiliary Functions & Variables
-
-(defvar lordar-mode-line-segments--face-cache (make-hash-table :test 'equal)
-  "Cache for concatenated face names.
-This function gets called frequently and this avoids calling `intern-soft' each
-time.")
-
-(defun lordar-mode-line-segments--get-face (&optional face)
-  "Return the appropriate face for the symbol FACE.
-If the selected window is active, return FACE with lordar-mode-line- as prefix.
-If inactive, return the corresponding FACE with an additional -inactive suffix.
-If FACE is nil, use the default face."
-  (if face
-      (let* ((active (mode-line-window-selected-p))
-             (cache-key (concat (symbol-name face) (if active "" "-inactive")))
-             (cached-face (gethash cache-key
-                                   lordar-mode-line-segments--face-cache)))
-        (or cached-face
-            (let ((new-face (intern-soft (concat "lordar-mode-line-"
-                                                 cache-key))))
-              (puthash cache-key new-face
-                       lordar-mode-line-segments--face-cache))))
-    (if (mode-line-window-selected-p)
-        'lordar-mode-line
-      'lordar-mode-line-inactive)))
 
 (defun lordar-mode-line-segments--get-symbol (key symbols)
   "Return the symbol associated with KEY from SYMBOLS alist.
@@ -91,7 +69,7 @@ the symbols suffix. For instance, buffer-status gets turned into
   "Propertize TEXT with the FACE.
 If the selected window is active, set FACE with lordar-mode-line- as prefix.
 If inactive, set the corresponding FACE with an additional -inactive suffix."
-  (propertize text 'face (lordar-mode-line-segments--get-face face)))
+  (propertize text 'face (lordar-mode-line--segments-get-face face)))
 
 ;;;; Segment Adjust Height
 
@@ -134,7 +112,7 @@ If FACTOR is not given, use `lordar-mode-line-height-adjust-factor'."
 If WIDTH is nil, set it to 1."
   (let* ((width (or width 1.0)))
     (propertize " " 'display `((space-width ,width))
-                'face (lordar-mode-line-segments--get-face 'vertical-space))))
+                'face (lordar-mode-line--segments-get-face 'vertical-space))))
 
 ;;;; Segment Major Mode
 
@@ -394,6 +372,16 @@ Set vc branch text as car and vc state symbol as cdr."
          (vc-state (lordar-mode-line-segments--vc-state-get)))
     (setq-local lordar-mode-line-segments--vc-branch-and-state
                 (list vc-branch vc-state))))
+
+;; Add the necessary advices and hooks:
+
+(lordar-mode-line--setup-hooks-alist-add
+ '((find-file-hook . lordar-mode-line-segments--vc-branch-and-state-update)
+   (after-save-hook . lordar-mode-line-segments--vc-branch-and-state-update)))
+
+(lordar-mode-line--setup-advices-alist-add
+ '(vc-refresh-state
+   :after lordar-mode-line-segments--vc-branch-and-state-update))
 
 ;;;;; Version Control Branch
 
@@ -655,11 +643,11 @@ output. If SHOW-ZERO is non-nil then also show the counter if it is
 zero. If USE-ZERO-FACES is non-nil then use special faces for zero count."
   (unless lordar-mode-line-segments--syntax-checking-counters
     (lordar-mode-line-segments--syntax-checking-counters-update))
-  (when-let ((counters lordar-mode-line-segments--syntax-checking-counters)
-             (counter (cond
-                       ((eq type :error) (nth 0 counters))
-                       ((eq type :warning) (nth 1 counters))
-                       ((eq type :note) (nth 2 counters)))))
+  (when-let* ((counters lordar-mode-line-segments--syntax-checking-counters)
+              (counter (cond
+                        ((eq type :error) (nth 0 counters))
+                        ((eq type :warning) (nth 1 counters))
+                        ((eq type :note) (nth 2 counters)))))
     (let* ((is-not-0 (> (string-to-number counter) 0)))
       (when-let* ((counter-formatted
                    (when (or is-not-0 show-zero)
@@ -703,6 +691,14 @@ For FORMAT-STRING, SHOW-ZERO and USE-ZERO-FACES see
 `lordar-mode-line-segments--syntax-checking'."
   (lordar-mode-line-segments--syntax-checking
    :note format-string show-zero use-zero-faces))
+
+;; Add the necessary advices and hooks:
+
+(lordar-mode-line--setup-advices-alist-add
+ '((flymake--handle-report
+    :after lordar-mode-line-segments--syntax-checking-counters-update)
+   (flymake-start
+    :after lordar-mode-line-segments--syntax-checking-counters-update)))
 
 ;;;; Segment Evil State
 
