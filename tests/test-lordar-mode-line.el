@@ -332,12 +332,13 @@
         (setq warning-minimum-log-level :error)
         (setq test-buffer (generate-new-buffer "test-me.el"))
         (switch-to-buffer test-buffer)
+        ;; Trust the content.
+        (setq untrusted-content nil)
+        (setq trusted-content :all)
         (emacs-lisp-mode)
         (flymake-mode 1)
         (insert "sdjdfsj\n(require 'nonexistant\n")
-        (setq-local untrusted-content nil)
         (flymake-start)
-        (setq-local untrusted-content nil)
         (sleep-for 1))
 
       (after-all

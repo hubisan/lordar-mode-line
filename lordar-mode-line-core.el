@@ -243,7 +243,8 @@ The left part is aligned to the left side and the right part to the right."
 
 (defvar lordar-mode-line-setup-hooks-alist
   '((find-file-hook . lordar-mode-line--set-major-mode-specific)
-    (after-change-major-mode-hook . lordar-mode-line--set-major-mode-specific))
+    (after-change-major-mode-hook . lordar-mode-line--set-major-mode-specific)
+    (after-save-hook . lordar-mode-line-segments--buffer-name-invalidate-cache))
   "Alist of hooks and their corresponding setup functions.")
 
 (defun lordar-mode-line--setup-hooks-alist-add (hook-pairs)

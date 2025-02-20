@@ -185,6 +185,10 @@ Use FORMAT-STRING to change the output."
     (lordar-mode-line-segments--propertize lordar-mode-line-segments--buffer-name
                                            'buffer-name)))
 
+(defun lordar-mode-line-segments--buffer-name-invalidate-cache ()
+  "Invalidate the cache of the buffer name."
+  (setq lordar-mode-line-segments--buffer-name nil))
+
 ;;;; Segment Buffer Status
 
 (defcustom lordar-mode-line-buffer-status-symbols
