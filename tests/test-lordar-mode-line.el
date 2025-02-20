@@ -161,7 +161,11 @@
         (spy-on 'lordar-mode-line-segments--buffer-name-update :and-call-through)
         (lordar-mode-line-segments-buffer-name)
         (expect 'lordar-mode-line-segments--buffer-name-update
-                :to-have-been-called-times 0))))
+                :to-have-been-called-times 0)
+        (lordar-mode-line-segments--buffer-name-invalidate-cache)
+        (lordar-mode-line-segments-buffer-name)
+        (expect 'lordar-mode-line-segments--buffer-name-update
+                :to-have-been-called-times 1))))
 
   (describe "> Buffer Status"
     (describe "- lordar-mode-line-segments-buffer-status"
