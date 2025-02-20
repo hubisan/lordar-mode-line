@@ -6,6 +6,7 @@
 
 ** Unreleased
 
+- =Added= Test for ~lordar-mode-line-segments--buffer-name-invalidate-cache~.
 - =Fixed= The buffer name was not updating if the file was saved with a new name. It will invalidate the buffer name cache now, when a document is saved.
 - =Fixed= Trying to fix the test by setting the new variable for trusted content.
 
