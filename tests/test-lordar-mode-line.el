@@ -1,4 +1,4 @@
-;;; test-lordar-mode-line.el --- Tests  -*- lexical-binding:t -*-
+;;; test-lordar-mode-line.el --- Tests  -*- lexical-binding:t; no-byte-compile: t -*-
 
 ;; Tests to check if the database functions are working.
 
