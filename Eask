@@ -14,8 +14,10 @@
 (keywords "mode-line" "faces")
 (license "GPLv3")
 
-(package-file "lordar-mode-line.el")
-(files "lordar-mode-line-*.el")
+(package-file "lisp/lordar-mode-line.el")
+(files "lisp/*.el")
+
+(load-paths "./lisp/" "./tests/")
 
 ;; https://emacs-eask.github.io/DSL/#-source-alias
 (source "gnu")
