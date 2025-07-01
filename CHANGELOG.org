@@ -4,6 +4,7 @@
 
 ** Unreleased
 
+- =Fixed= Aligning to the right is now pixel perfect.
 - =Added= Test for ~lordar-mode-line-segments--buffer-name-invalidate-cache~.
 
 ** Remark

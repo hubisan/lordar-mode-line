@@ -220,22 +220,22 @@ If it is a string propertize it with the default face."
 
 (defun lordar-mode-line--construct-string (segments)
   "Construct a mode line with SEGMENTS which contains left and right parts.
-The left part is aligned to the left side and the right part to the right."
+The left part is aligned to the left side and the right part to the
+right. See Info node `(elisp)Pixel Specification' to get more info about
+the calculation."
   (let* ((left (plist-get segments :left))
          (right (plist-get segments :right))
          (left (when left (mapconcat #'lordar-mode-line--eval-segment left)))
          (right (when right (mapconcat #'lordar-mode-line--eval-segment right)))
-         (outside fringes-outside-margins)
-         (left-margin (if outside 0.0 1.0))
-         (right-fringe (if outside -1.0 0.0))
-         (right-margin (if outside -1.0 0.0))
+         (right-width (/ (string-pixel-width right) (float (frame-char-width))))
+         (adjustment (if fringes-outside-margins -1.0 0.0))
          (padding (propertize
                    " " 'display
                    `(space :align-to
                            (- right-margin
-                              (,right-fringe . right-fringe)
-                              (,right-margin . right-margin)
-                              ,(length right)))
+                              (,adjustment . right-fringe)
+                              (,adjustment . right-margin)
+                              ,right-width))
                    'face (lordar-mode-line--segments-get-face))))
     (concat left padding right)))
 
