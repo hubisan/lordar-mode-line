@@ -1,5 +1,6 @@
 ((emacs-lisp-mode
   . ((indent-tabs-mode . nil)
+     (lisp-indent-function . lisp-indent-function)
      (fill-column . 80)
      (sentence-end-double-space . nil)
      (checkdoc-verb-check-experimental-flag . nil)
