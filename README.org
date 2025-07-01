@@ -69,6 +69,10 @@ The following segments are available:
 - lordar-mode-line-segments-adjust-height (&optional factor) :: Adjust the mode-line height by a factor using invisible spaces. If factor is not set it uses ~lordar-mode-line-segments-adjust-height~.
   
 - lordar-mode-line-segments-vertical-space (&optional width) :: Vertical space with space-width set to width. If width is nil, set it to 1.
+
+- lordar-mode-line-segments-line-number :: The current line number.
+
+- lordar-mode-line-segments-column-number :: The current column number.
   
 - lordar-mode-line-segments-major-mode (&optional format-string) :: Return the pretty name of the current buffer's major mode. Use format-string to change the output format.
   

@@ -114,6 +114,40 @@ If WIDTH is nil, set it to 1."
     (propertize " " 'display `((space-width ,width))
                 'face (lordar-mode-line--segments-get-face 'vertical-space))))
 
+;;;; Line Number
+
+(defface lordar-mode-line-line-number
+  '((t (:inherit lordar-mode-line)))
+  "Face for displaying the line number in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-line-number-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face for displaying the line number in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-line-number ()
+  "Return the current line number as a propertized string."
+  (lordar-mode-line-segments--propertize
+   (format-mode-line "%l") 'line-number))
+
+;;; Column Number
+
+(defface lordar-mode-line-column-number
+  '((t (:inherit lordar-mode-line)))
+  "Face for displaying the column number in the mode line."
+  :group 'lordar-mode-line-faces)
+
+(defface lordar-mode-line-column-number-inactive
+  '((t (:inherit lordar-mode-line-inactive)))
+  "Face for displaying the column number in the mode line when inactive."
+  :group 'lordar-mode-line-faces)
+
+(defun lordar-mode-line-segments-column-number ()
+  "Return the current column number as a propertized string."
+  (lordar-mode-line-segments--propertize
+   (format-mode-line "%c") 'column-number))
+
 ;;;; Segment Major Mode
 
 (defface lordar-mode-line-major-mode
