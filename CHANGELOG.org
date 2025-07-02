@@ -1,9 +1,10 @@
-#+STARTUP: content
+#+STARTUP: showall
 
 * Changelog
 
 ** Unreleased
 
+- =Changed= Snapshot Emacs version using continue-on-error: true now.
 - =Added= Line and column number segments.
 - =Fixed= Aligning to the right is now pixel perfect.
 - =Added= Test for ~lordar-mode-line-segments--buffer-name-invalidate-cache~.
