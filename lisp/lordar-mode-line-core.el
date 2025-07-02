@@ -219,25 +219,48 @@ If it is a string propertize it with the default face."
     (eval segment)))
 
 (defun lordar-mode-line--construct-string (segments)
-  "Construct a mode line with SEGMENTS which contains left and right parts.
-The left part is aligned to the left side and the right part to the
-right. See Info node `(elisp)Pixel Specification' to get more info about
-the calculation."
-  (let* ((left (plist-get segments :left))
-         (right (plist-get segments :right))
-         (left (when left (mapconcat #'lordar-mode-line--eval-segment left)))
-         (right (when right (mapconcat #'lordar-mode-line--eval-segment right)))
-         (right-width (/ (string-pixel-width right) (float (frame-char-width))))
-         (adjustment (if fringes-outside-margins -1.0 0.0))
+  "Construct a mode line string from SEGMENTS with left and right alignment.
+SEGMENTS is a plist with keys :left and :right. Each side contains a list of
+evaluated mode line segments.
+
+Pixel alignment for the right side is done by calculating the necessary padding
+using the following steps:
+
+   Start at the right margin:
+                         |
+   Add the right margin width, the right fringe width (only if it lies outside
+   the margins), and the scroll bar width (if enabled), to reach the visible
+   window edge:
+                         |--margin-->|--fringe-->|--scroll bar-->|
+   Subtract the pixel width of the right segment (in chars, as a float) to get
+   the position where the right segment should start:
+             |<---------------------- right segment text --------|
+
+See Info node `(elisp)Pixel Specification' for more information about the
+`:align-to' display specification.
+
+Whether fringes are outside the margins is determined using `window-fringes',
+not the variable `fringes-outside-margins', because the window layout can also
+be set directly via `set-window-fringes', bypassing that variable."
+  (let* ((left-segments (plist-get segments :left))
+         (right-segments (plist-get segments :right))
+         (left-text (when left-segments
+                      (mapconcat #'lordar-mode-line--eval-segment left-segments)))
+         (right-text (when right-segments
+                       (mapconcat #'lordar-mode-line--eval-segment right-segments)))
+         (right-width (/ (string-pixel-width right-text) (float (frame-char-width))))
+         (fringes-outside-p (nth 2 (window-fringes)))
+         (fringe-adjust (if fringes-outside-p -1.0 0.0))
          (padding (propertize
                    " " 'display
                    `(space :align-to
                            (- right-margin
-                              (,adjustment . right-fringe)
-                              (,adjustment . right-margin)
+                              (,fringe-adjust . right-fringe)
+                              (-1.0 . right-margin)
+                              (-1.0 . scroll-bar)
                               ,right-width))
                    'face (lordar-mode-line--segments-get-face))))
-    (concat left padding right)))
+    (concat left-text padding right-text)))
 
 ;;;; Setup
 

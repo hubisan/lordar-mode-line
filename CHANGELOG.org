@@ -4,6 +4,8 @@
 
 ** Unreleased
 
+- ~Added~ If the scroll bar is enabled it is also taken into account when calculating the alignment of the right segment.
+- =Fixed= Aligning with ~fringes-outside-margins~ set to ~nil~ was not working correctly.
 - =Changed= Snapshot Emacs version using continue-on-error: true now.
 - =Added= Line and column number segments.
 - =Fixed= Aligning to the right is now pixel perfect.
