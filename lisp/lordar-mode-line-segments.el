@@ -89,11 +89,13 @@ top. Just play around with it until it matches what you like."
 (defun lordar-mode-line-segments-adjust-height (&optional factor)
   "Adjust the mode-line height by FACTOR using invisible spaces.
 If FACTOR is not given, use `lordar-mode-line-height-adjust-factor'."
-  (let* ((factor (or factor lordar-mode-line-height-adjust-factor))
-         (top (propertize " " 'display `((space-width 0.01) (raise ,factor))))
-         (bottom (propertize " " 'display
-                             `((space-width 0.01) (raise ,(* -1 factor))))))
-    (propertize (concat top bottom) 'face 'lordar-mode-line-height-adjust)))
+  (if (display-graphic-p)
+      (let* ((factor (or factor lordar-mode-line-height-adjust-factor))
+             (top (propertize " " 'display `((space-width 0.01) (raise ,factor))))
+             (bottom (propertize " " 'display
+                                 `((space-width 0.01) (raise ,(* -1 factor))))))
+        (propertize (concat top bottom) 'face 'lordar-mode-line-height-adjust))
+    ""))
 
 ;;;; Segment Vertical Space
 
