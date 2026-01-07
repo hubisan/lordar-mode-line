@@ -7,7 +7,7 @@
 ;; Domain Specific Language
 ;; https://emacs-eask.github.io/DSL/
 (package "lordar-mode-line"
-         "0.1.0"
+         "0.2.0"
          "Minimal mode-line")
 
 (website-url "https://github.com/hubisan/lordar-mode-line")
@@ -38,3 +38,6 @@
 
 ;; Dont' check docstring for correct verb use.
 (setq checkdoc-verb-check-experimental-flag nil)
+
+;; Ingnore unsafe variables to not get prompted while testing.
+(setq enable-local-variables :safe)

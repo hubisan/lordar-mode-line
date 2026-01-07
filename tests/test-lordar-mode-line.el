@@ -7,6 +7,8 @@
 (require 'buttercup)
 (require 'ert)
 
+(require 'cl-lib)
+
 (require 'lordar-mode-line)
 
 (require 'project)
@@ -63,15 +65,19 @@
               (buffer-read-only . "%%"))))
 
     (it "returns the symbol associated with the key when it exists"
-      (expect (lordar-mode-line-segments--get-symbol 'buffer-modified 'buffer-status)
+      (expect (lordar-mode-line-segments--get-symbol
+               'buffer-modified
+               'lordar-mode-line-buffer-status-symbols)
               :to-equal "*"))
 
     (it "raises an error when the symbols alist doesn't exist"
-      (expect (lordar-mode-line-segments--get-symbol 'buffer-modified 'non-existent-status)
+      (expect (lordar-mode-line-segments--get-symbol
+               'buffer-modified 'non-existent-status)
               :to-throw 'user-error))
 
     (it "raises an error when the key doesn't exist in the symbols alist"
-      (expect (lordar-mode-line-segments--get-symbol 'non-existent-key 'buffer-status)
+      (expect (lordar-mode-line-segments--get-symbol
+               'non-existent-key 'lordar-mode-line-buffer-status-symbols)
               :to-throw 'user-error))))
 
 ;;;; Segments
@@ -85,28 +91,36 @@
         (setq lordar-mode-line-height-adjust-factor 0.2))
 
       (it "adjusts the height of the mode-line using the default factor"
-        (let* ((factor 0.2)
-               (top (propertize " " 'display
-                                `((space-width 0.01) (raise ,factor))))
-               (bottom (propertize " " 'display
-                                   `((space-width 0.01) (raise ,(* -1 factor)))))
-               (expected (propertize (concat top bottom) 'face
-                                     'lordar-mode-line-height-adjust)))
-          (should (equal-including-properties
-                   expected
-                   (lordar-mode-line-segments-adjust-height)))))
+        (cl-letf (((symbol-function 'display-graphic-p)
+                   (lambda (&optional _frame) t)))
+          (let* ((factor 0.2)
+                 (top (propertize " " 'display
+                                  `((space-width 0.01) (raise ,factor))))
+                 (bottom (propertize " " 'display
+                                     `((space-width 0.01) (raise ,(* -1 factor)))))
+                 (expected (propertize (concat top bottom) 'face
+                                       'lordar-mode-line-height-adjust)))
+            (should (equal-including-properties
+                     expected
+                     (lordar-mode-line-segments-adjust-height))))))
 
       (it "adjusts the height of the mode-line using a provided factor"
-        (let* ((factor 0.3)
-               (top (propertize " " 'display
-                                `((space-width 0.01) (raise ,factor))))
-               (bottom (propertize " " 'display
-                                   `((space-width 0.01) (raise ,(* -1 factor)))))
-               (expected (propertize (concat top bottom) 'face
-                                     'lordar-mode-line-height-adjust)))
-          (should (equal-including-properties
-                   expected
-                   (lordar-mode-line-segments-adjust-height 0.3)))))))
+        (cl-letf (((symbol-function 'display-graphic-p)
+                   (lambda (&optional _frame) t)))
+          (let* ((factor 0.3)
+                 (top (propertize " " 'display
+                                  `((space-width 0.01) (raise ,factor))))
+                 (bottom (propertize " " 'display
+                                     `((space-width 0.01) (raise ,(* -1 factor)))))
+                 (expected (propertize (concat top bottom) 'face
+                                       'lordar-mode-line-height-adjust)))
+            (should (equal-including-properties
+                     expected
+                     (lordar-mode-line-segments-adjust-height 0.3))))))
+      (it "returns empty string in TTY"
+        (cl-letf (((symbol-function 'display-graphic-p)
+                   (lambda (&optional _frame) nil)))
+          (should (equal "" (lordar-mode-line-segments-adjust-height)))))))
 
   (describe "> Vertical Space"
     (describe "- lordar-mode-line-segments-vertical-space"
