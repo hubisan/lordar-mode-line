@@ -58,6 +58,8 @@ To activate the mode line use ~lordar-mode-line-mode~. This will setup up the de
 
 To modify the definitions change the variables ~lordar-mode-line-default-segments~, ~lordar-mode-line-prog-mode-segments~ or ~lordar-mode-line-minimal-segments~.
 
+Each segments variable is a plist with the keys ~:left-important~, ~:left~, and ~:right~. Segments under ~:left-important~ are kept visible as long as possible when space is tight; ~:left~ is truncated first. ~:right~ is aligned to the right.
+
 To define a custom mode-line for a major mode with the segments provided
 - create a new variable holding the segments for the left and right side and
 - modify ~lordar-mode-line-major-mode-definitions~ to include your new mode-line definition. 
@@ -109,17 +111,18 @@ The following segments are available:
 
 Set the following variables to change the behaviour of the package:
 
-- lordar-mode-line-default-segments :: Default segments used for the mode line. The default is:
+- lordar-mode-line-default-segments :: Default segments used for the mode line. The plist keys are ~:left-important~, ~:left~, and ~:right~. ~:left-important~ is prioritized when the available width is too small. The default is:
   #+BEGIN_SRC emacs-lisp
     (setq lordar-mode-line-default-segments
-          '(:left
+          '(:left-important
             ((lordar-mode-line-segments-adjust-height)
              (lordar-mode-line-segments-winum " %s ")
              (lordar-mode-line-segments-evil-state " %s ")
              (lordar-mode-line-segments-buffer-status
               (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-             (lordar-mode-line-segments-buffer-name "%s")
-             (lordar-mode-line-segments-project-root-relative-directory " %s"))
+             (lordar-mode-line-segments-buffer-name "%s"))
+            :left
+            ((lordar-mode-line-segments-project-root-relative-directory " %s"))
             :right
             ((lordar-mode-line-segments-vc-state
               (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
@@ -131,14 +134,15 @@ Set the following variables to change the behaviour of the package:
 - lordar-mode-line-prog-mode-segments :: Segments used for the mode line in `prog-mode'. The default is:
   #+BEGIN_SRC emacs-lisp
     (setq lordar-mode-line-prog-mode-segments
-          '(:left
+          '(:left-important
             ((lordar-mode-line-segments-adjust-height)
              (lordar-mode-line-segments-winum " %s ")
              (lordar-mode-line-segments-evil-state " %s ")
              (lordar-mode-line-segments-buffer-status
               (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-             (lordar-mode-line-segments-buffer-name "%s")
-             (lordar-mode-line-segments-project-root-relative-directory " %s"))
+             (lordar-mode-line-segments-buffer-name "%s"))
+            :left
+            ((lordar-mode-line-segments-project-root-relative-directory " %s"))
             :right
             ((lordar-mode-line-segments-syntax-checking-error-counter "%s ")
              (lordar-mode-line-segments-syntax-checking-warning-counter "%s ")
@@ -152,13 +156,14 @@ Set the following variables to change the behaviour of the package:
 - lordar-mode-line-minimal-segments :: Minimal segments for mode like `special-mode'. The default is:
   #+BEGIN_SRC emacs-lisp
     (setq lordar-mode-line-minimal-segments
-          '(:left
+          '(:left-important
             ((lordar-mode-line-segments-adjust-height)
              (lordar-mode-line-segments-winum " %s ")
              (lordar-mode-line-segments-evil-state " %s ")
              (lordar-mode-line-segments-buffer-status
               (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
              (lordar-mode-line-segments-buffer-name "%s"))
+            :left nil
             :right
             ((lordar-mode-line-segments-major-mode "%s "))))
   #+END_SRC
@@ -176,7 +181,7 @@ Set the following variables to change the behaviour of the package:
 - lordar-mode-line-buffer-status-symbols :: Symbols for buffer status (segment: lordar-mode-line-segments-buffer-status) in the mode line. Each entry is a cons cell with a keyword and a corresponding string. Default:
   #+BEGIN_SRC emacs-lisp
     (setq lordar-mode-line-buffer-status-symbols
-          ((buffer-not-modified)
+          ((buffer-not-modified . nil)
            (buffer-modified . "*")
            (buffer-read-only . "%")))
   #+END_SRC
@@ -188,7 +193,7 @@ Set the following variables to change the behaviour of the package:
            (needs-update . "!u") (needs-merge . "!m")
            (added . "*") (removed . "x")
            (conflict . "!c") (ignored . "x")
-           (default)))
+           (default . nil)))
   #+END_SRC
 
 *** Faces

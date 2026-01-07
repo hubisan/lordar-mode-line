@@ -51,19 +51,19 @@
 
 ;;;; Segments Auxiliary Functions & Variables
 
-(defun lordar-mode-line-segments--get-symbol (key symbols)
-  "Return the symbol associated with KEY from SYMBOLS alist.
-SYMBOLS is the symbol without the prefix lordar-mode-line and without
-the symbols suffix. For instance, buffer-status gets turned into
-`lordar-mode-line-buffer-status-symbols'."
-  (let* ((symbols-string (concat "lordar-mode-line-" (symbol-name symbols)
-                                 "-symbols"))
-         (symbols-alist (symbol-value (intern-soft symbols-string))))
-    (unless symbols-alist
-      (user-error "Symbols alist %s doesn't exist" symbols-string))
-    (if (assoc key symbols-alist)
-        (alist-get key symbols-alist)
-      (user-error "Symbol %s doesn't exist in %s" key symbols-string))))
+(defun lordar-mode-line-segments--get-symbol (key symbols-var)
+  "Return the value associated with KEY from SYMBOLS-VAR.
+SYMBOLS-VAR must be a symbol naming a variable whose value is an alist.
+The alist value may contain nil values intentionally."
+  (unless (symbolp symbols-var)
+    (user-error "SYMBOLS-VAR must be a symbol, got: %S" symbols-var))
+  (unless (boundp symbols-var)
+    (user-error "Symbols variable %S is not bound" symbols-var))
+  (let* ((symbols-alist (symbol-value symbols-var))
+         (cell (assq key symbols-alist)))
+    (if cell
+        (cdr cell)  ;; may be nil intentionally
+      (user-error "Symbol %s doesn't exist in %S" key symbols-var))))
 
 (defun lordar-mode-line-segments--propertize (text face)
   "Propertize TEXT with the FACE.
@@ -291,7 +291,8 @@ Use FORMAT-STRING to change the output format."
                   ;; about modified.
                   (t '(buffer-read-only buffer-status-read-only))))
                 (symbol (lordar-mode-line-segments--get-symbol
-                         (car symbol-and-face) 'buffer-status))
+                         (car symbol-and-face)
+                         'lordar-mode-line-buffer-status-symbols))
                 (symbol-formatted (if format-string
                                       (format format-string symbol)
                                     symbol))
@@ -379,8 +380,8 @@ Use FORMAT-STRING to change the output format."
          (directory-formatted (if format-string
                                   (format format-string directory)
                                 directory)))
-    (setq lordar-mode-line-segments--project-root-relative-directory
-          directory-formatted)))
+    (setq-local lordar-mode-line-segments--project-root-relative-directory
+                directory-formatted)))
 
 (defun lordar-mode-line-segments-project-root-relative-directory (&optional format-string)
   "Return the directory path relative to the root of the project.
@@ -438,10 +439,14 @@ Set vc branch text as car and vc state symbol as cdr."
 (defun lordar-mode-line-segments--vc-branch-get ()
   "Return the vc branch name for the current buffer."
   (when (and vc-mode buffer-file-name)
-    (when-let* ((backend (vc-backend buffer-file-name)))
+    (let* ((backend (vc-backend buffer-file-name))
+           (s (substring-no-properties vc-mode)))
       (cond
-       ((equal backend 'Git) (substring-no-properties vc-mode 5))
-       ((equal backend 'Hg) (substring-no-properties vc-mode 4))))))
+       ((eq backend 'Git)
+        (if (>= (length s) 6) (substring s 5) s)) ;; " Git:" = 5 chars
+       ((eq backend 'Hg)
+        (if (>= (length s) 5) (substring s 4) s)) ;; " Hg:"  = 4 chars
+       (t nil)))))
 
 (defun lordar-mode-line-segments-vc-branch (&optional format-string)
   "Return the vc branch formatted to display in the mode line.
@@ -537,7 +542,9 @@ This is used for conflicts."
                               ((eq state 'conflict) 'conflict)
                               ((eq state 'ignored) 'ignored)
                               (t 'default))))
-      (lordar-mode-line-segments--get-symbol symbol 'vc-state))))
+      (lordar-mode-line-segments--get-symbol
+       symbol
+       'lordar-mode-line-vc-state-symbols))))
 
 (defun lordar-mode-line-segments--vc-state-get ()
   "Return an indicator representing the status of the current buffer.
@@ -551,7 +558,7 @@ Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
   "Return the face symbol for the vc STATE."
   (when (and vc-mode buffer-file-name)
     (when-let* ((state (or state (vc-state buffer-file-name))))
-      (cond ((memq state '(up-to-date removed ignore)) 'vc-state)
+      (cond ((memq state '(up-to-date removed ignored)) 'vc-state)
             ((memq state '(edited needs-update needs-merge added))
              'vc-state-dirty)
             ((memq state '(conflict)) 'vc-state-error)
@@ -672,7 +679,7 @@ Use FORMAT-STRING to change the output."
     (dolist (d (flymake-diagnostics))
       (when (= (flymake--severity type)
                (flymake--severity (flymake-diagnostic-type d)))
-        (cl-incf count)))
+        (setq count (+ 1 count))))
     (number-to-string count)))
 
 (defun lordar-mode-line-segments--syntax-checking (type &optional format-string
@@ -777,7 +784,6 @@ Use FORMAT-STRING to change the output."
 (defun lordar-mode-line-segments-winum (&optional format-string)
   "Return the winum number string for the mode line.
 Use FORMAT-STRING to change the output."
-  (setq winum-auto-setup-mode-line nil)
   (when (and (featurep 'winum)
              (bound-and-true-p winum-mode))
     (when-let* ((nr (winum-get-number-string))

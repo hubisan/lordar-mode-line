@@ -2,8 +2,14 @@
 
 * Changelog
 
-** Unreleased
+** 0.2.0
 
+- ~Fixed~ Fixed tests and fixed linting errors.
+- ~Changed~ Simplified ~...--get-symbol~, gets called with variable name directly now, now need for ~intern-soft~.
+- ~Changed~ ~...--vc-branch-get~ was brittle if for some reason the ~vc-mode~ would not be of the right length.
+- ~Changed~ Some little optimizations and fixes.
+- ~Changed~ ~winum-auto-setup-modeline~ is disabled when activating the modeline instead of each time the segment ist recalculated (inefficient).
+- ~Fixed~ If the text in the modeline is too long, it gets truncated and tries to be sort of intelligent. For this I added a new segment ~:left-important~. This segment has the highest priority and is truncated in the very end if needed. ~:left~ ist the first segment to be truncated if needed followed by ~:right~.
 - ~Added~ If the scroll bar is enabled it is also taken into account when calculating the alignment of the right segment.
 - =Fixed= Aligning with ~fringes-outside-margins~ set to ~nil~ was not working correctly.
 - =Changed= Snapshot Emacs version using continue-on-error: true now.

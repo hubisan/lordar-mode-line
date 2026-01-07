@@ -36,14 +36,15 @@
   :group 'lordar-mode-line)
 
 (defcustom lordar-mode-line-default-segments
-  '(:left
+  '(:left-important
     ((lordar-mode-line-segments-adjust-height)
      (lordar-mode-line-segments-winum " %s ")
      (lordar-mode-line-segments-evil-state " %s ")
      (lordar-mode-line-segments-buffer-status
       (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-     (lordar-mode-line-segments-buffer-name "%s")
-     (lordar-mode-line-segments-project-root-relative-directory " %s"))
+     (lordar-mode-line-segments-buffer-name "%s"))
+    :left
+    ((lordar-mode-line-segments-project-root-relative-directory " %s"))
     :right
     ((lordar-mode-line-segments-vc-state
       (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
@@ -51,24 +52,26 @@
      (lordar-mode-line-segments-major-mode "%s ")
      (lordar-mode-line-segments-input-method " %s ")))
   "Default segments used for the mode line.
-The :left key defines segment functions or strings to be displayed on the left
-side of the mode line, while the :right key defines those for the right side.
-Some segment functions support additional arguments."
+The :left-important key defines segments that should remain visible even
+if space is tight. The :left key defines standard left segments, and
+:right defines those for the right side."
   :group 'lordar-mode-line
   :type '(plist :tag "Mode Line Segments"
-                :key-type (choice (const :tag "Left Segments" :left)
+                :key-type (choice (const :tag "Left Important Segments" :left-important)
+                                  (const :tag "Left Segments" :left)
                                   (const :tag "Right Segments" :right))
                 :value-type (repeat :tag "Segment Function or String" sexp)))
 
 (defcustom lordar-mode-line-prog-mode-segments
-  '(:left
+  '(:left-important
     ((lordar-mode-line-segments-adjust-height)
      (lordar-mode-line-segments-winum " %s ")
      (lordar-mode-line-segments-evil-state " %s ")
      (lordar-mode-line-segments-buffer-status
       (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-     (lordar-mode-line-segments-buffer-name "%s")
-     (lordar-mode-line-segments-project-root-relative-directory " %s"))
+     (lordar-mode-line-segments-buffer-name "%s"))
+    :left
+    ((lordar-mode-line-segments-project-root-relative-directory " %s"))
     :right
     ((lordar-mode-line-segments-syntax-checking-error-counter "%s ")
      (lordar-mode-line-segments-syntax-checking-warning-counter "%s ")
@@ -78,32 +81,36 @@ Some segment functions support additional arguments."
      (lordar-mode-line-segments-vc-branch "%s ")
      (lordar-mode-line-segments-major-mode "%s ")))
   "Segments used for the mode line in `prog-mode'.
-The :left key defines segment functions or strings to be displayed on the left
-side of the mode line, while the :right key defines those for the right side.
-Some segment functions support additional arguments."
+The :left-important key defines segments that should remain visible even
+if space is tight. The :left key defines standard left segments, and
+:right defines those for the right side."
   :group 'lordar-mode-line
   :type '(plist :tag "Mode Line Segments"
-                :key-type (choice (const :tag "Left Segments" :left)
+                :key-type (choice (const :tag "Left Important Segments"
+                                         :left-important)
+                                  (const :tag "Left Segments" :left)
                                   (const :tag "Right Segments" :right))
                 :value-type (repeat :tag "Segment Function or String" sexp)))
 
 (defcustom lordar-mode-line-minimal-segments
-  '(:left
+  '(:left-important
     ((lordar-mode-line-segments-adjust-height)
      (lordar-mode-line-segments-winum " %s ")
      (lordar-mode-line-segments-evil-state " %s ")
      (lordar-mode-line-segments-buffer-status
       (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
      (lordar-mode-line-segments-buffer-name "%s"))
+    :left nil
     :right
     ((lordar-mode-line-segments-major-mode "%s ")))
   "Minimal segments used for the mode line.
-The :left key defines segment functions or strings to be displayed on the left
-side of the mode line, while the :right key defines those for the right side.
-Some segment functions support additional arguments."
+The :left-important key defines segments that should remain visible even
+if space is tight. The :left key defines standard left segments, and
+:right defines those for the right side."
   :group 'lordar-mode-line
   :type '(plist :tag "Mode Line Segments"
-                :key-type (choice (const :tag "Left Segments" :left)
+                :key-type (choice (const :tag "Left Important Segments" :left-important)
+                                  (const :tag "Left Segments" :left)
                                   (const :tag "Right Segments" :right))
                 :value-type (repeat :tag "Segment Function or String" sexp)))
 
@@ -220,21 +227,22 @@ If it is a string propertize it with the default face."
 
 (defun lordar-mode-line--construct-string (segments)
   "Construct a mode line string from SEGMENTS with left and right alignment.
-SEGMENTS is a plist with keys :left and :right. Each side contains a list of
-evaluated mode line segments.
+SEGMENTS is a plist with keys :left-important, :left and :right. Each side
+contains a list of evaluated mode line segments. Left-important is priorised if
+the lenght of the desired mode-line text exceeds the available width.
 
 Pixel alignment for the right side is done by calculating the necessary padding
 using the following steps:
 
-   Start at the right margin:
-                         |
-   Add the right margin width, the right fringe width (only if it lies outside
-   the margins), and the scroll bar width (if enabled), to reach the visible
-   window edge:
-                         |--margin-->|--fringe-->|--scroll bar-->|
-   Subtract the pixel width of the right segment (in chars, as a float) to get
-   the position where the right segment should start:
-             |<---------------------- right segment text --------|
+Start at the right margin:
+                      |
+Add the right margin width, the right fringe width (only if it lies outside
+the margins), and the scroll bar width (if enabled), to reach the visible
+window edge:
+                      |--margin-->|--fringe-->|--scroll bar-->|
+Subtract the pixel width of the right segment (in chars, as a float) to get
+the position where the right segment should start:
+          |<---------------------- right segment text --------|
 
 See Info node `(elisp)Pixel Specification' for more information about the
 `:align-to' display specification.
@@ -242,25 +250,62 @@ See Info node `(elisp)Pixel Specification' for more information about the
 Whether fringes are outside the margins is determined using `window-fringes',
 not the variable `fringes-outside-margins', because the window layout can also
 be set directly via `set-window-fringes', bypassing that variable."
-  (let* ((left-segments (plist-get segments :left))
-         (right-segments (plist-get segments :right))
-         (left-text (when left-segments
-                      (mapconcat #'lordar-mode-line--eval-segment left-segments)))
-         (right-text (when right-segments
-                       (mapconcat #'lordar-mode-line--eval-segment right-segments)))
-         (right-width (/ (string-pixel-width right-text) (float (frame-char-width))))
+  (let* ((left-important-segs (plist-get segments :left-important))
+         (left-segs (plist-get segments :left))
+         (right-segs (plist-get segments :right))
+         (face (lordar-mode-line--segments-get-face))
+         ;; eval segments (once)
+         (left-important-text
+          (if left-important-segs
+              (mapconcat #'lordar-mode-line--eval-segment left-important-segs)
+            ""))
+         (left-text
+          (if left-segs
+              (mapconcat #'lordar-mode-line--eval-segment left-segs)
+            ""))
+         (right-text
+          (if right-segs
+              (mapconcat #'lordar-mode-line--eval-segment right-segs)
+            ""))
+         ;; Not sure if ths is the correct width, but in testing it works.
+         (win-width (window-total-width))
+         (left-important-width (string-width left-important-text))
+         ;; available for: left-text + right-text
+         (avail (max 0 (- win-width left-important-width)))
+         ;; allocate space: keep right as much as possible
+         (right-desired-width (string-width right-text))
+         (right-space (min right-desired-width avail))
+         (left-space (max 0 (- avail right-space)))
+         ;; truncate left (cut on the right)
+         (left-text
+          (if (> left-space 0)
+              (truncate-string-to-width left-text left-space)
+            ""))
+         ;; Truncate right (cut on the left -> keep the end)
+         (right-text
+          (if (> left-space 0)
+              right-text
+            (if (> right-space 0)
+                (substring right-text
+                           (min (1- right-desired-width)
+                                (max 0 (- right-desired-width right-space))))
+              "")))
+         ;; Pixel-based align-to padding, computed with FINAL right-text
          (fringes-outside-p (nth 2 (window-fringes)))
          (fringe-adjust (if fringes-outside-p -1.0 0.0))
-         (padding (propertize
-                   " " 'display
-                   `(space :align-to
-                           (- right-margin
-                              (,fringe-adjust . right-fringe)
-                              (-1.0 . right-margin)
-                              (-1.0 . scroll-bar)
-                              ,right-width))
-                   'face (lordar-mode-line--segments-get-face))))
-    (concat left-text padding right-text)))
+         (right-width-float (/ (string-pixel-width right-text)
+                               (float (frame-char-width))))
+         (padding
+          (propertize
+           " " 'display
+           `(space :align-to
+                   (- right-margin
+                      (,fringe-adjust . right-fringe)
+                      (-1.0 . right-margin)
+                      (-1.0 . scroll-bar)
+                      ,right-width-float))
+           'face face)))
+    (concat left-important-text left-text padding right-text)))
 
 ;;;; Setup
 
@@ -318,6 +363,10 @@ When REMOVE is non-nil remove the advices else add the advices."
 
 (defun lordar-mode-line--setup-activate ()
   "Activate the lordar-mode-line."
+  ;; Need to disable this to not make it try to add itself to the mode-line.
+  (with-eval-after-load 'winum
+    (when (boundp 'winum-auto-setup-mode-line)
+      (setq winum-auto-setup-mode-line nil)))
   (lordar-mode-line-set-mode-line nil t)
   ;; Change mode line in active buffers.
   (dolist (buffer (buffer-list))

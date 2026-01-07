@@ -1,11 +1,11 @@
 ;;; lordar-mode-line.el --- Minimal mode-line -*- lexical-binding: t -*-
 
-;; Copyright (C) 2024 Daniel Hubmann
+;; Copyright (C) 2024-2026 Daniel Hubmann
 
 ;; Author: Daniel Hubmann <hubisan@gmail.com>
 ;; Maintainer: Daniel Hubmann <hubisan@gmail.com>
 ;; URL: https://github.com/hubisan/lordar-mode-line
-;; Version: 0.1.0
+;; Version: 0.2.0
 ;; Package-Requires: ((emacs "29.4"))
 ;; Keywords: mode-line faces
 
