@@ -1,6 +1,6 @@
 ;;; lordar-mode-line-segments.el --- Segments for lordar-mode-line -*- lexical-binding: t -*-
 
-;; Copyright (C) 2024 Daniel Hubmann
+;; Copyright (C) 2024-2026 Daniel Hubmann
 
 ;; This file is not part of GNU Emacs
 

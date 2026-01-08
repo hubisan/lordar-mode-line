@@ -1,6 +1,6 @@
 ;;; lordar-mode-line-core.el --- Core functions and variables -*- lexical-binding: t -*-
 
-;; Copyright (C) 2024 Daniel Hubmann
+;; Copyright (C) 2024-2026 Daniel Hubmann
 
 ;; This file is not part of GNU Emacs
 
@@ -42,12 +42,12 @@
      (lordar-mode-line-segments-evil-state " %s ")
      (lordar-mode-line-segments-buffer-status
       (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-     (lordar-mode-line-segments-buffer-name "%s"))
+     (lordar-mode-line-segments-buffer-name "%s "))
     :left
-    ((lordar-mode-line-segments-project-root-relative-directory " %s"))
+    ((lordar-mode-line-segments-project-root-relative-directory "%s"))
     :right
     ((lordar-mode-line-segments-vc-state
-      (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
+      (concat " %s" (lordar-mode-line-segments-vertical-space 0.4)))
      (lordar-mode-line-segments-vc-branch "%s ")
      (lordar-mode-line-segments-major-mode "%s ")
      (lordar-mode-line-segments-input-method " %s ")))
@@ -69,11 +69,11 @@ if space is tight. The :left key defines standard left segments, and
      (lordar-mode-line-segments-evil-state " %s ")
      (lordar-mode-line-segments-buffer-status
       (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-     (lordar-mode-line-segments-buffer-name "%s"))
+     (lordar-mode-line-segments-buffer-name "%s "))
     :left
-    ((lordar-mode-line-segments-project-root-relative-directory " %s"))
+    ((lordar-mode-line-segments-project-root-relative-directory "%s"))
     :right
-    ((lordar-mode-line-segments-syntax-checking-error-counter "%s ")
+    ((lordar-mode-line-segments-syntax-checking-error-counter " %s ")
      (lordar-mode-line-segments-syntax-checking-warning-counter "%s ")
      (lordar-mode-line-segments-syntax-checking-note-counter "%s ")
      (lordar-mode-line-segments-vc-state
@@ -99,7 +99,7 @@ if space is tight. The :left key defines standard left segments, and
      (lordar-mode-line-segments-evil-state " %s ")
      (lordar-mode-line-segments-buffer-status
       (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-     (lordar-mode-line-segments-buffer-name "%s"))
+     (lordar-mode-line-segments-buffer-name "%s "))
     :left nil
     :right
     ((lordar-mode-line-segments-major-mode "%s ")))

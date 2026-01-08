@@ -114,58 +114,58 @@ Set the following variables to change the behaviour of the package:
 - lordar-mode-line-default-segments :: Default segments used for the mode line. The plist keys are ~:left-important~, ~:left~, and ~:right~. ~:left-important~ is prioritized when the available width is too small. The default is:
   #+BEGIN_SRC emacs-lisp
     (setq lordar-mode-line-default-segments
-          '(:left-important
-            ((lordar-mode-line-segments-adjust-height)
-             (lordar-mode-line-segments-winum " %s ")
-             (lordar-mode-line-segments-evil-state " %s ")
-             (lordar-mode-line-segments-buffer-status
-              (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-             (lordar-mode-line-segments-buffer-name "%s"))
-            :left
-            ((lordar-mode-line-segments-project-root-relative-directory " %s"))
-            :right
-            ((lordar-mode-line-segments-vc-state
-              (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-             (lordar-mode-line-segments-vc-branch "%s ")
-             (lordar-mode-line-segments-major-mode "%s ")
-             (lordar-mode-line-segments-input-method " %s "))))
+      '(:left-important
+        ((lordar-mode-line-segments-adjust-height)
+         (lordar-mode-line-segments-winum " %s ")
+         (lordar-mode-line-segments-evil-state " %s ")
+         (lordar-mode-line-segments-buffer-status
+          (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
+         (lordar-mode-line-segments-buffer-name "%s "))
+        :left
+        ((lordar-mode-line-segments-project-root-relative-directory "%s"))
+        :right
+        ((lordar-mode-line-segments-vc-state
+          (concat " %s" (lordar-mode-line-segments-vertical-space 0.4)))
+         (lordar-mode-line-segments-vc-branch "%s ")
+         (lordar-mode-line-segments-major-mode "%s ")
+         (lordar-mode-line-segments-input-method " %s "))))
   #+END_SRC
 
 - lordar-mode-line-prog-mode-segments :: Segments used for the mode line in `prog-mode'. The default is:
   #+BEGIN_SRC emacs-lisp
     (setq lordar-mode-line-prog-mode-segments
-          '(:left-important
-            ((lordar-mode-line-segments-adjust-height)
-             (lordar-mode-line-segments-winum " %s ")
-             (lordar-mode-line-segments-evil-state " %s ")
-             (lordar-mode-line-segments-buffer-status
-              (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-             (lordar-mode-line-segments-buffer-name "%s"))
-            :left
-            ((lordar-mode-line-segments-project-root-relative-directory " %s"))
-            :right
-            ((lordar-mode-line-segments-syntax-checking-error-counter "%s ")
-             (lordar-mode-line-segments-syntax-checking-warning-counter "%s ")
-             (lordar-mode-line-segments-syntax-checking-note-counter "%s ")
-             (lordar-mode-line-segments-vc-state
-              (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-             (lordar-mode-line-segments-vc-branch "%s ")
-             (lordar-mode-line-segments-major-mode "%s "))))
+      '(:left-important
+        ((lordar-mode-line-segments-adjust-height)
+         (lordar-mode-line-segments-winum " %s ")
+         (lordar-mode-line-segments-evil-state " %s ")
+         (lordar-mode-line-segments-buffer-status
+          (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
+         (lordar-mode-line-segments-buffer-name "%s "))
+        :left
+        ((lordar-mode-line-segments-project-root-relative-directory "%s"))
+        :right
+        ((lordar-mode-line-segments-syntax-checking-error-counter " %s ")
+         (lordar-mode-line-segments-syntax-checking-warning-counter "%s ")
+         (lordar-mode-line-segments-syntax-checking-note-counter "%s ")
+         (lordar-mode-line-segments-vc-state
+          (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
+         (lordar-mode-line-segments-vc-branch "%s ")
+         (lordar-mode-line-segments-major-mode "%s "))))
   #+END_SRC
 
 - lordar-mode-line-minimal-segments :: Minimal segments for mode like `special-mode'. The default is:
   #+BEGIN_SRC emacs-lisp
     (setq lordar-mode-line-minimal-segments
-          '(:left-important
-            ((lordar-mode-line-segments-adjust-height)
-             (lordar-mode-line-segments-winum " %s ")
-             (lordar-mode-line-segments-evil-state " %s ")
-             (lordar-mode-line-segments-buffer-status
-              (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-             (lordar-mode-line-segments-buffer-name "%s"))
-            :left nil
-            :right
-            ((lordar-mode-line-segments-major-mode "%s "))))
+      '(:left-important
+        ((lordar-mode-line-segments-adjust-height)
+         (lordar-mode-line-segments-winum " %s ")
+         (lordar-mode-line-segments-evil-state " %s ")
+         (lordar-mode-line-segments-buffer-status
+          (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
+         (lordar-mode-line-segments-buffer-name "%s "))
+        :left nil
+        :right
+        ((lordar-mode-line-segments-major-mode "%s "))))
   #+END_SRC
 
 - lordar-mode-line-major-mode-definitions :: Definition of mode line segments to use per major mode. Each key can be a single major mode symbol or a list of major mode symbols. The corresponding value must be a variable containing the segments. By default a major mode specific mode line is used for prog-mode and for some special modes. The default is:

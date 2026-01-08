@@ -2,6 +2,10 @@
 
 * Changelog
 
+** 0.2.1
+
+- ~Fixed~ Vertical Space when segments get truncated. Just added vertical space in the default segments accordingly.
+
 ** 0.2.0
 
 - ~Fixed~ Fixed tests and fixed linting errors.
