@@ -46,8 +46,9 @@
     :left
     ((lordar-mode-line-segments-project-root-relative-directory "%s"))
     :right
-    ((lordar-mode-line-segments-vc-state
-      (concat " %s" (lordar-mode-line-segments-vertical-space 0.4)))
+    ((lordar-mode-line-segments-vertical-space)
+     (lordar-mode-line-segments-vc-state
+      (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
      (lordar-mode-line-segments-vc-branch "%s ")
      (lordar-mode-line-segments-major-mode "%s ")
      (lordar-mode-line-segments-input-method " %s ")))
@@ -73,7 +74,8 @@ if space is tight. The :left key defines standard left segments, and
     :left
     ((lordar-mode-line-segments-project-root-relative-directory "%s"))
     :right
-    ((lordar-mode-line-segments-syntax-checking-error-counter " %s ")
+    ((lordar-mode-line-segments-vertical-space)
+     (lordar-mode-line-segments-syntax-checking-error-counter "%s ")
      (lordar-mode-line-segments-syntax-checking-warning-counter "%s ")
      (lordar-mode-line-segments-syntax-checking-note-counter "%s ")
      (lordar-mode-line-segments-vc-state
