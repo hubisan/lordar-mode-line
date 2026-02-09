@@ -2,6 +2,11 @@
 
 * Changelog
 
+** 0.3.0
+
+- =Added= Make vc-branch also work in Dired and Magit (if using Git). Changed the function to get the branch and added the segment also to the minimal line, as Magit status is derived from special-mode.
+- =Fixed= Fixed some compiler warnings.
+
 ** 0.2.1
 
 - ~Fixed~ Vertical Space when segments get truncated. Just added vertical space in the default segments accordingly.

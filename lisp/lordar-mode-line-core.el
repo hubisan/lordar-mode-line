@@ -104,7 +104,8 @@ if space is tight. The :left key defines standard left segments, and
      (lordar-mode-line-segments-buffer-name "%s "))
     :left nil
     :right
-    ((lordar-mode-line-segments-major-mode "%s ")))
+    ((lordar-mode-line-segments-vc-branch "%s ")
+     (lordar-mode-line-segments-major-mode "%s ")))
   "Minimal segments used for the mode line.
 The :left-important key defines segments that should remain visible even
 if space is tight. The :left key defines standard left segments, and
@@ -366,9 +367,8 @@ When REMOVE is non-nil remove the advices else add the advices."
 (defun lordar-mode-line--setup-activate ()
   "Activate the lordar-mode-line."
   ;; Need to disable this to not make it try to add itself to the mode-line.
-  (with-eval-after-load 'winum
-    (when (boundp 'winum-auto-setup-mode-line)
-      (setq winum-auto-setup-mode-line nil)))
+  (when (bound-and-true-p winum-auto-setup-mode-line)
+    (setq winum-auto-setup-mode-line nil))
   (lordar-mode-line-set-mode-line nil t)
   ;; Change mode line in active buffers.
   (dolist (buffer (buffer-list))

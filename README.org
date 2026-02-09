@@ -167,7 +167,8 @@ Set the following variables to change the behaviour of the package:
          (lordar-mode-line-segments-buffer-name "%s "))
         :left nil
         :right
-        ((lordar-mode-line-segments-major-mode "%s "))))
+        ((lordar-mode-line-segments-vc-branch "%s ")
+         (lordar-mode-line-segments-major-mode "%s "))))
   #+END_SRC
 
 - lordar-mode-line-major-mode-definitions :: Definition of mode line segments to use per major mode. Each key can be a single major mode symbol or a list of major mode symbols. The corresponding value must be a variable containing the segments. By default a major mode specific mode line is used for prog-mode and for some special modes. The default is:

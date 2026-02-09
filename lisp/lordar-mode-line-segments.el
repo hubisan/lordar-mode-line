@@ -30,6 +30,7 @@
 (eval-when-compile
   (require 'project)
   (require 'vc)
+  (require 'vc-git)
   (require 'flymake))
 
 (eval-when-compile
@@ -45,7 +46,8 @@
 
 (eval-when-compile
   (declare-function winum-get-number-string "ext:winum")
-  (declare-function flymake--severity "ext:flymake"))
+  (declare-function flymake--severity "ext:flymake")
+  (declare-function vc-git--symbolic-ref "ext:vc-git"))
 
 (require 'lordar-mode-line-core)
 
@@ -438,15 +440,19 @@ Set vc branch text as car and vc state symbol as cdr."
 
 (defun lordar-mode-line-segments--vc-branch-get ()
   "Return the vc branch name for the current buffer."
-  (when (and vc-mode buffer-file-name)
-    (let* ((backend (vc-backend buffer-file-name))
-           (s (substring-no-properties vc-mode)))
-      (cond
-       ((eq backend 'Git)
-        (if (>= (length s) 6) (substring s 5) s)) ;; " Git:" = 5 chars
-       ((eq backend 'Hg)
-        (if (>= (length s) 5) (substring s 4) s)) ;; " Hg:"  = 4 chars
-       (t nil)))))
+  (if (and vc-mode buffer-file-name)
+      (let* ((backend (vc-backend buffer-file-name))
+             (s (substring-no-properties vc-mode)))
+        (cond
+         ((eq backend 'Git)
+          (if (>= (length s) 6) (substring s 5) s)) ;; " Git:" = 5 chars
+         ((eq backend 'Hg)
+          (if (>= (length s) 5) (substring s 4) s)) ;; " Hg:"  = 4 chars
+         (t nil)))
+    ;; Also get the branch if Git and if it is a buffer like dired.
+    (when (eq (ignore-errors (vc-responsible-backend default-directory)) 'Git)
+      (when (require 'vc-git nil 'noerror)
+        (ignore-errors (vc-git--symbolic-ref default-directory))))))
 
 (defun lordar-mode-line-segments-vc-branch (&optional format-string)
   "Return the vc branch formatted to display in the mode line.
