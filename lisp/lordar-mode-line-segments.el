@@ -440,7 +440,7 @@ Set vc branch text as car and vc state symbol as cdr."
 
 (defun lordar-mode-line-segments--vc-branch-get ()
   "Return the vc branch name for the current buffer."
-  (if (and vc-mode buffer-file-name)
+  (if (and buffer-file-name vc-mode)
       (let* ((backend (vc-backend buffer-file-name))
              (s (substring-no-properties vc-mode)))
         (cond
@@ -450,7 +450,10 @@ Set vc branch text as car and vc state symbol as cdr."
           (if (>= (length s) 5) (substring s 4) s)) ;; " Hg:"  = 4 chars
          (t nil)))
     ;; Also get the branch if Git and if it is a buffer like dired.
-    (when (eq (ignore-errors (vc-responsible-backend default-directory)) 'Git)
+    (when (and
+           (or (eq major-mode 'dired-mode)
+               (eq major-mode 'magit-status-mode))
+           (eq (ignore-errors (vc-responsible-backend default-directory)) 'Git))
       (when (require 'vc-git nil 'noerror)
         (ignore-errors (vc-git--symbolic-ref default-directory))))))
 

@@ -2,6 +2,10 @@
 
 * Changelog
 
+** 0.3.1
+
+- =Fixed= Vc-branch for buffers without filename has to be limited to certain major-modes. Will update the list if I see more modes that have to be added. The reason is that default-directory is not reliable to get the current buffer directory name. Inside dired and magit-status is will be correct most of the time so this is okay for me.
+
 ** 0.3.0
 
 - =Added= Make vc-branch also work in Dired and Magit (if using Git). Changed the function to get the branch and added the segment also to the minimal line, as Magit status is derived from special-mode.
