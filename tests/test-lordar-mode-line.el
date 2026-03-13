@@ -279,9 +279,9 @@
         (expect 'lordar-mode-line-segments--project-root-basename-update
                 :to-have-been-called-times 0))))
 
-  (describe "> Version Control"
+  (describe "> Git"
 
-    (describe "- lordar-mode-line-segments-vc-branch"
+    (describe "- lordar-mode-line-segments-git-branch"
 
       (before-each
         (setq vc-mode " Git-develop")
@@ -289,21 +289,21 @@
               "/home/test//lordar-mode-line/lordar-mode-line-segments")
         (spy-on 'vc-backend :and-return-value 'Git))
 
-      (it "returns the VC branch with the correct face and format"
-        (setq lordar-mode-line-segments--vc-branch-and-state nil)
-        (let* ((expected (propertize " develop" 'face 'lordar-mode-line-vc-branch)))
+      (it "returns the Git branch with the correct face and format"
+        (setq lordar-mode-line-segments--git-branch-and-state nil)
+        (let* ((expected (propertize " develop" 'face 'lordar-mode-line-git-branch)))
           (should (equal-including-properties
                    expected
-                   (lordar-mode-line-segments-vc-branch " %s")))))
+                   (lordar-mode-line-segments-git-branch " %s")))))
 
       (it "uses the cached value"
-        (spy-on 'lordar-mode-line-segments--vc-branch-and-state-update
+        (spy-on 'lordar-mode-line-segments--git-branch-and-state-update
                 :and-call-through)
-        (lordar-mode-line-segments-vc-branch)
-        (expect 'lordar-mode-line-segments--vc-branch-and-state-update
+        (lordar-mode-line-segments-git-branch)
+        (expect 'lordar-mode-line-segments--git-branch-and-state-update
                 :to-have-been-called-times 0)))
 
-    (describe "- lordar-mode-line-segments-vc-state"
+    (describe "- lordar-mode-line-segments-git-state"
 
       (before-each
         (setq vc-mode " Git-develop")
@@ -312,18 +312,18 @@
         (spy-on 'vc-backend :and-return-value 'Git)
         (spy-on 'vc-state :and-return-value 'edited))
 
-      (it "returns the VC state with the correct face and format"
-        (setq lordar-mode-line-segments--vc-branch-and-state nil)
-        (let* ((expected (propertize " *" 'face 'lordar-mode-line-vc-state-dirty)))
+      (it "returns the Git state with the correct face and format"
+        (setq lordar-mode-line-segments--git-branch-and-state nil)
+        (let* ((expected (propertize " *" 'face 'lordar-mode-line-git-state-dirty)))
           (should (equal-including-properties
                    expected
-                   (lordar-mode-line-segments-vc-state " %s")))))
+                   (lordar-mode-line-segments-git-state " %s")))))
 
       (it "uses the cached value"
-        (spy-on 'lordar-mode-line-segments--vc-branch-and-state-update
+        (spy-on 'lordar-mode-line-segments--git-branch-and-state-update
                 :and-call-through)
-        (lordar-mode-line-segments-vc-state)
-        (expect 'lordar-mode-line-segments--vc-branch-and-state-update
+        (lordar-mode-line-segments-git-state)
+        (expect 'lordar-mode-line-segments--git-branch-and-state-update
                 :to-have-been-called-times 0))))
 
   (describe "> Input Method"
@@ -439,16 +439,25 @@
       (expect (memq 'lordar-mode-line--set-major-mode-specific
                     (default-value 'after-change-major-mode-hook))
               :to-be-truthy)
-      (expect (memq 'lordar-mode-line-segments--vc-branch-and-state-update
+      (expect (memq 'lordar-mode-line-segments--git-branch-and-state-update
                     (default-value 'find-file-hook))
               :to-be-truthy)
-      (expect (memq 'lordar-mode-line-segments--vc-branch-and-state-update
+      (expect (memq 'lordar-mode-line-segments--git-branch-and-state-update
                     (default-value 'after-save-hook))
-              :to-be-truthy))
+              :to-be-truthy)
+      (expect (memq 'lordar-mode-line-segments--git-branch-and-state-update
+                    (default-value 'dired-after-readin-hook))
+              :to-be-truthy)
+      (expect (memq 'lordar-mode-line-segments--git-branch-and-state-update
+                    (default-value 'focus-in-hook))
+              :to-be-truthy)
+      (expect (memq 'lordar-mode-line-segments--git-branch-and-state-update
+                    (default-value 'magit-post-refresh-hook))
+        :to-be-truthy))
 
     (it "sets up advices correctly"
       (lordar-mode-line-mode 1)
-      (expect (advice-member-p 'lordar-mode-line-segments--vc-branch-and-state-update
+      (expect (advice-member-p 'lordar-mode-line-segments--git-branch-and-state-update
                                'vc-refresh-state)
               :to-be-truthy)
       (expect (advice-member-p 'lordar-mode-line-segments--syntax-checking-counters-update

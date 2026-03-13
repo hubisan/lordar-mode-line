@@ -47,9 +47,9 @@
     ((lordar-mode-line-segments-project-root-relative-directory "%s"))
     :right
     ((lordar-mode-line-segments-vertical-space)
-     (lordar-mode-line-segments-vc-state
+     (lordar-mode-line-segments-git-state
       (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-     (lordar-mode-line-segments-vc-branch "%s ")
+     (lordar-mode-line-segments-git-branch "%s ")
      (lordar-mode-line-segments-major-mode "%s ")
      (lordar-mode-line-segments-input-method " %s ")))
   "Default segments used for the mode line.
@@ -78,9 +78,9 @@ if space is tight. The :left key defines standard left segments, and
      (lordar-mode-line-segments-syntax-checking-error-counter "%s ")
      (lordar-mode-line-segments-syntax-checking-warning-counter "%s ")
      (lordar-mode-line-segments-syntax-checking-note-counter "%s ")
-     (lordar-mode-line-segments-vc-state
+     (lordar-mode-line-segments-git-state
       (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-     (lordar-mode-line-segments-vc-branch "%s ")
+     (lordar-mode-line-segments-git-branch "%s ")
      (lordar-mode-line-segments-major-mode "%s ")))
   "Segments used for the mode line in `prog-mode'.
 The :left-important key defines segments that should remain visible even
@@ -104,7 +104,7 @@ if space is tight. The :left key defines standard left segments, and
      (lordar-mode-line-segments-buffer-name "%s "))
     :left nil
     :right
-    ((lordar-mode-line-segments-vc-branch "%s ")
+    ((lordar-mode-line-segments-git-branch "%s ")
      (lordar-mode-line-segments-major-mode "%s ")))
   "Minimal segments used for the mode line.
 The :left-important key defines segments that should remain visible even

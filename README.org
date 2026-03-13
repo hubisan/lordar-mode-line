@@ -86,9 +86,9 @@ The following segments are available:
   
 - lordar-mode-line-segments-project-root-relative-directory (&optional format-string) :: Return the directory path relative to the root of the project. If not in a project, the default-directory is returned. Use format-string to change the output format.
   
-- lordar-mode-line-segments-vc-branch (&optional format-string) :: Return the vc branch formatted to display in the mode line. Use format-string to change the output.
+- lordar-mode-line-segments-git-branch (&optional format-string) :: Return the vc branch formatted to display in the mode line. Use format-string to change the output. Notice: If switching the branch it is not guaranteed to be updated immediately. 
   
-- lordar-mode-line-segments-vc-state (&optional format-string) :: Return an indicator representing the vc status of the current buffer. Use format-string to change the output. The indicators defined in lordar-mode-line-vc-state-symbols are used.
+- lordar-mode-line-segments-git-state (&optional format-string) :: Return an indicator representing the vc status of the current buffer. Use format-string to change the output. The indicators defined in lordar-mode-line-git-state-symbols are used.
   
 - lordar-mode-line-segments-input-method (&optional format-string) :: Return the current input method. Use format-string to change the output.
   
@@ -125,9 +125,9 @@ Set the following variables to change the behaviour of the package:
         ((lordar-mode-line-segments-project-root-relative-directory "%s"))
         :right
         ((lordar-mode-line-segments-vertical-space)
-         (lordar-mode-line-segments-vc-state
+         (lordar-mode-line-segments-git-state
           (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-         (lordar-mode-line-segments-vc-branch "%s ")
+         (lordar-mode-line-segments-git-branch "%s ")
          (lordar-mode-line-segments-major-mode "%s ")
          (lordar-mode-line-segments-input-method " %s "))))
   #+END_SRC
@@ -149,9 +149,9 @@ Set the following variables to change the behaviour of the package:
          (lordar-mode-line-segments-syntax-checking-error-counter "%s ")
          (lordar-mode-line-segments-syntax-checking-warning-counter "%s ")
          (lordar-mode-line-segments-syntax-checking-note-counter "%s ")
-         (lordar-mode-line-segments-vc-state
+         (lordar-mode-line-segments-git-state
           (concat "%s" (lordar-mode-line-segments-vertical-space 0.4)))
-         (lordar-mode-line-segments-vc-branch "%s ")
+         (lordar-mode-line-segments-git-branch "%s ")
          (lordar-mode-line-segments-major-mode "%s "))))
   #+END_SRC
 
@@ -167,7 +167,7 @@ Set the following variables to change the behaviour of the package:
          (lordar-mode-line-segments-buffer-name "%s "))
         :left nil
         :right
-        ((lordar-mode-line-segments-vc-branch "%s ")
+        ((lordar-mode-line-segments-git-branch "%s ")
          (lordar-mode-line-segments-major-mode "%s "))))
   #+END_SRC
 
@@ -189,9 +189,9 @@ Set the following variables to change the behaviour of the package:
            (buffer-read-only . "%")))
   #+END_SRC
     
-- lordar-mode-line-vc-state-symbols :: Symbols for buffer status in the mode line. Each entry is a cons cell with a keyword and a corresponding string. Default:
+- lordar-mode-line-git-state-symbols :: Symbols for buffer status in the mode line. Each entry is a cons cell with a keyword and a corresponding string. Default:
   #+BEGIN_SRC emacs-lisp
-    (setq lordar-mode-line-vc-state-symbols
+    (setq lordar-mode-line-git-state-symbols
           ((up-to-date) (edited . "*")
            (needs-update . "!u") (needs-merge . "!m")
            (added . "*") (removed . "x")
