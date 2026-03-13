@@ -403,74 +403,81 @@ Use FORMAT-STRING to change the output format."
        lordar-mode-line-segments--project-root-relative-directory
        'project-root-relative-directory))))
 
-;;;; Segment Version Control
+;;;; Segment Git
 
-(defvar-local lordar-mode-line-segments--vc-branch-and-state nil
-  "Cache for the vc branch and vc state.")
+(defvar-local lordar-mode-line-segments--git-branch-and-state nil
+  "Cache for the Git branch and Git state.")
 
-(defun lordar-mode-line-segments--vc-branch-and-state-update (&rest _args)
-  "Update `lordar-mode-line-segments--vc-branch-and-state'.
-Set vc branch text as car and vc state symbol as cdr."
-  (let* ((vc-branch (lordar-mode-line-segments--vc-branch-get))
-         (vc-state (lordar-mode-line-segments--vc-state-get)))
-    (setq-local lordar-mode-line-segments--vc-branch-and-state
-                (list vc-branch vc-state))))
+(defun lordar-mode-line-segments--git-branch-and-state-update (&rest _args)
+  "Update `lordar-mode-line-segments--git-branch-and-state'.
+Set Git branch text as car and Git state symbol as cdr."
+  (when default-directory
+    (ignore-errors
+      (vc-file-setprop default-directory 'vc-git-symbolic-ref nil)))
+  (let* ((git-branch (lordar-mode-line-segments--git-branch-get))
+         (git-state (lordar-mode-line-segments--git-state-get)))
+    (setq-local lordar-mode-line-segments--git-branch-and-state
+                (list git-branch git-state))))
 
 ;; Add the necessary advices and hooks:
 
 (lordar-mode-line--setup-hooks-alist-add
- '((find-file-hook . lordar-mode-line-segments--vc-branch-and-state-update)
-   (after-save-hook . lordar-mode-line-segments--vc-branch-and-state-update)))
+ '((find-file-hook . lordar-mode-line-segments--git-branch-and-state-update)
+   (after-save-hook . lordar-mode-line-segments--git-branch-and-state-update)
+   (dired-after-readin-hook . lordar-mode-line-segments--git-branch-and-state-update)
+   (focus-in-hook . lordar-mode-line-segments--git-branch-and-state-update)))
 
 (lordar-mode-line--setup-advices-alist-add
  '(vc-refresh-state
-   :after lordar-mode-line-segments--vc-branch-and-state-update))
+   :after lordar-mode-line-segments--git-branch-and-state-update))
 
-;;;;; Version Control Branch
+(with-eval-after-load 'magit
+  (add-hook 'magit-post-refresh-hook
+            #'lordar-mode-line-segments--git-branch-and-state-update))
 
-(defface lordar-mode-line-vc-branch
+;;;;; Git Branch
+
+(defface lordar-mode-line-git-branch
   '((t (:inherit lordar-mode-line)))
-  "Face used to display the vc branch name in the mode line."
+  "Face used to display the Git branch name in the mode line."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-vc-branch-inactive
+(defface lordar-mode-line-git-branch-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used to display the vc branch name in the mode line when inactive."
+  "Face used to display the Git branch name in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments--vc-branch-get ()
-  "Return the vc branch name for the current buffer."
-  (if (and buffer-file-name vc-mode)
-      (let* ((backend (vc-backend buffer-file-name))
-             (s (substring-no-properties vc-mode)))
-        (cond
-         ((eq backend 'Git)
-          (if (>= (length s) 6) (substring s 5) s)) ;; " Git:" = 5 chars
-         ((eq backend 'Hg)
-          (if (>= (length s) 5) (substring s 4) s)) ;; " Hg:"  = 4 chars
-         (t nil)))
-    ;; Also get the branch if Git and if it is a buffer like dired.
-    (when (and
-           (or (eq major-mode 'dired-mode)
-               (eq major-mode 'magit-status-mode))
-           (eq (ignore-errors (vc-responsible-backend default-directory)) 'Git))
-      (when (require 'vc-git nil 'noerror)
-        (ignore-errors (vc-git--symbolic-ref default-directory))))))
+(defun lordar-mode-line-segments--git-branch-get ()
+  "Return the Git branch name for the current buffer."
+  (cond
+   ((and buffer-file-name vc-mode)
+    (let ((backend (vc-backend buffer-file-name))
+          (s (substring-no-properties vc-mode)))
+      (when (eq backend 'Git)
+        (if (>= (length s) 6)
+            (substring s 5)
+          s))))
+   ((and (or (eq major-mode 'dired-mode)
+             (eq major-mode 'magit-status-mode))
+         (eq (ignore-errors (vc-responsible-backend default-directory)) 'Git))
+    (when (require 'vc-git nil 'noerror)
+      (ignore-errors
+        (vc-git--symbolic-ref default-directory))))))
 
-(defun lordar-mode-line-segments-vc-branch (&optional format-string)
-  "Return the vc branch formatted to display in the mode line.
+(defun lordar-mode-line-segments-git-branch (&optional format-string)
+  "Return the Git branch formatted to display in the mode line.
 Use FORMAT-STRING to change the output."
-  (unless lordar-mode-line-segments--vc-branch-and-state
-    (lordar-mode-line-segments--vc-branch-and-state-update))
-  (when-let* ((branch (car-safe lordar-mode-line-segments--vc-branch-and-state))
+  (unless lordar-mode-line-segments--git-branch-and-state
+    (lordar-mode-line-segments--git-branch-and-state-update))
+  (when-let* ((branch (car-safe lordar-mode-line-segments--git-branch-and-state))
               (branch-formatted (if format-string
                                     (format format-string branch)
                                   branch)))
-    (lordar-mode-line-segments--propertize branch-formatted 'vc-branch)))
+    (lordar-mode-line-segments--propertize branch-formatted 'git-branch)))
 
-;;;;; Version Control State
+;;;;; Git State
 
-(defcustom lordar-mode-line-vc-state-symbols
+(defcustom lordar-mode-line-git-state-symbols
   '((up-to-date . nil)
     ;; File has been edited.
     (edited . "*")
@@ -488,7 +495,7 @@ Use FORMAT-STRING to change the output."
     (ignored . "x")
     ;; Will be used for the other states.
     (default . nil))
-  "Symbols for buffer status in the mode line.
+  "Symbols for Git buffer status in the mode line.
 Each entry is a cons cell with a keyword and a corresponding string."
   :group 'lordar-mode-line
   :type '(alist :tag "String"
@@ -504,42 +511,42 @@ Each entry is a cons cell with a keyword and a corresponding string."
                         (const :tag "Default" default))
                 :value-type (string :tag "String to use")))
 
-(defface lordar-mode-line-vc-state
+(defface lordar-mode-line-git-state
   '((t (:inherit lordar-mode-line)))
-  "Face used to display the vc state in the mode line."
+  "Face used to display the Git state in the mode line."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-vc-state-inactive
+(defface lordar-mode-line-git-state-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used to display the vc state in the mode line when inactive."
+  "Face used to display the Git state in the mode line when inactive."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-vc-state-dirty
+(defface lordar-mode-line-git-state-dirty
   '((t (:inherit lordar-mode-line-warning)))
-  "Face used to display a dirty vc state in the mode line.
+  "Face used to display a dirty Git state in the mode line.
 This is used for edited, needs-update, needs-merge and added."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-vc-state-dirty-inactive
+(defface lordar-mode-line-git-state-dirty-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used to display dirty vc state in the mode line when inactive.
+  "Face used to display dirty Git state in the mode line when inactive.
 This is used for edited, needs-update, needs-merge and added."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-vc-state-error
+(defface lordar-mode-line-git-state-error
   '((t (:inherit lordar-mode-line-error)))
-  "Face used to display error vc state in the mode line.
+  "Face used to display error Git state in the mode line.
 This is used for conflicts."
   :group 'lordar-mode-line-faces)
 
-(defface lordar-mode-line-vc-state-error-inactive
+(defface lordar-mode-line-git-state-error-inactive
   '((t (:inherit lordar-mode-line-inactive)))
-  "Face used to display error vc state in the mode line when inactive.
+  "Face used to display error Git state in the mode line when inactive.
 This is used for conflicts."
   :group 'lordar-mode-line-faces)
 
-(defun lordar-mode-line-segments--vc-state-get-symbol (&optional state)
-  "Return the symbo for the vc STATE."
+(defun lordar-mode-line-segments--git-state-get-symbol (&optional state)
+  "Return the symbol for the Git STATE."
   (when (and vc-mode buffer-file-name)
     (when-let* ((state (or state (vc-state buffer-file-name)))
                 (symbol (cond ((eq state 'up-to-date) 'up-to-date)
@@ -553,37 +560,36 @@ This is used for conflicts."
                               (t 'default))))
       (lordar-mode-line-segments--get-symbol
        symbol
-       'lordar-mode-line-vc-state-symbols))))
+       'lordar-mode-line-git-state-symbols))))
 
-(defun lordar-mode-line-segments--vc-state-get ()
-  "Return an indicator representing the status of the current buffer.
-Uses symbols defined in `lordar-mode-line-buffer-status-symbols'."
+(defun lordar-mode-line-segments--git-state-get ()
+  "Return an indicator representing the Git status of the current buffer.
+Uses symbols defined in `lordar-mode-line-git-state-symbols'."
   (when (and vc-mode buffer-file-name)
     (when-let* ((state (vc-state buffer-file-name))
-                (symbol (lordar-mode-line-segments--vc-state-get-symbol state)))
-      (setq-local lordar-mode-line-segments--vc-state-text symbol))))
+                (symbol (lordar-mode-line-segments--git-state-get-symbol state)))
+      symbol)))
 
-(defun lordar-mode-line-segments--vc-state-get-face (&optional state)
-  "Return the face symbol for the vc STATE."
+(defun lordar-mode-line-segments--git-state-get-face (&optional state)
+  "Return the face symbol for the Git STATE."
   (when (and vc-mode buffer-file-name)
     (when-let* ((state (or state (vc-state buffer-file-name))))
-      (cond ((memq state '(up-to-date removed ignored)) 'vc-state)
+      (cond ((memq state '(up-to-date removed ignored)) 'git-state)
             ((memq state '(edited needs-update needs-merge added))
-             'vc-state-dirty)
-            ((memq state '(conflict)) 'vc-state-error)
-            (t 'vc-state)))))
+             'git-state-dirty)
+            ((memq state '(conflict)) 'git-state-error)
+            (t 'git-state)))))
 
-(defun lordar-mode-line-segments-vc-state (&optional format-string)
-  "Return an indicator representing the vc status of the current buffer.
+(defun lordar-mode-line-segments-git-state (&optional format-string)
+  "Return an indicator representing the Git status of the current buffer.
 Use FORMAT-STRING to change the output."
-  (unless lordar-mode-line-segments--vc-branch-and-state
-    (lordar-mode-line-segments--vc-branch-and-state-update))
-  (when-let* ((state (car-safe
-                      (cdr-safe lordar-mode-line-segments--vc-branch-and-state)))
+  (unless lordar-mode-line-segments--git-branch-and-state
+    (lordar-mode-line-segments--git-branch-and-state-update))
+  (when-let* ((state (cadr lordar-mode-line-segments--git-branch-and-state))
               (state-formatted (if format-string
                                    (format format-string state)
                                  state))
-              (face-symbol (lordar-mode-line-segments--vc-state-get-face)))
+              (face-symbol (lordar-mode-line-segments--git-state-get-face)))
     (lordar-mode-line-segments--propertize state-formatted face-symbol)))
 
 ;;;; Segment Input Method

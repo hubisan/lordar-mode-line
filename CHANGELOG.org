@@ -2,6 +2,11 @@
 
 * Changelog
 
+** 0.4.0
+
+- =Changed= Instead of calling the segment vc it is git now.
+- =Fixed= The Git branch was not updating in dired and magit. Trying to update the branch and state more often to update after switching branch more often (it is still not guaranteed to be immediately).
+
 ** 0.3.1
 
 - =Fixed= Vc-branch for buffers without filename has to be limited to certain major-modes. Will update the list if I see more modes that have to be added. The reason is that default-directory is not reliable to get the current buffer directory name. Inside dired and magit-status is will be correct most of the time so this is okay for me.

@@ -7,7 +7,7 @@
 ;; Domain Specific Language
 ;; https://emacs-eask.github.io/DSL/
 (package "lordar-mode-line"
-         "0.3.1"
+         "0.4.0"
          "Minimal mode-line")
 
 (website-url "https://github.com/hubisan/lordar-mode-line")
