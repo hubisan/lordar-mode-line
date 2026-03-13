@@ -289,6 +289,13 @@
               "/home/test/lordar-mode-line/lordar-mode-line-segments")
         (spy-on 'vc-backend :and-return-value 'Git))
 
+      (it "test vc-mode value"
+        (message "vc-mode: %S" vc-mode)
+        (message "git-branch-get: %S" (lordar-mode-line-segments--git-branch-get))
+        (message "git-branch segment: %S" (lordar-mode-line-segments-git-branch " %s"))
+        (expect (lordar-mode-line-segments-git-branch) :to-be "develop")
+        )
+
       (it "returns the Git branch with the correct face and format"
         (setq lordar-mode-line-segments--git-branch-and-state nil)
         (let* ((expected (propertize " develop" 'face 'lordar-mode-line-git-branch)))

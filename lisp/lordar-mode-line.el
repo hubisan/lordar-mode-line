@@ -5,7 +5,7 @@
 ;; Author: Daniel Hubmann <hubisan@gmail.com>
 ;; Maintainer: Daniel Hubmann <hubisan@gmail.com>
 ;; URL: https://github.com/hubisan/lordar-mode-line
-;; Version: 0.3.1
+;; Version: 0.4.9
 ;; Package-Requires: ((emacs "29.4"))
 ;; Keywords: mode-line faces
 
