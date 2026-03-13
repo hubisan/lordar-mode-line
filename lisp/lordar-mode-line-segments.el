@@ -415,9 +415,12 @@ Set Git branch text as car and Git state symbol as cdr."
     (ignore-errors
       (vc-file-setprop default-directory 'vc-git-symbolic-ref nil)))
   (let* ((git-branch (lordar-mode-line-segments--git-branch-get))
-         (git-state (lordar-mode-line-segments--git-state-get)))
+         (git-state-raw (and vc-mode buffer-file-name
+                             (vc-state buffer-file-name)))
+         (git-state-indicator (lordar-mode-line-segments--git-state-get-symbol
+                               git-state-raw)))
     (setq-local lordar-mode-line-segments--git-branch-and-state
-                (list git-branch git-state))))
+                (list git-branch git-state-indicator git-state-raw))))
 
 ;; Add the necessary advices and hooks:
 
@@ -562,14 +565,6 @@ This is used for conflicts."
        symbol
        'lordar-mode-line-git-state-symbols))))
 
-(defun lordar-mode-line-segments--git-state-get ()
-  "Return an indicator representing the Git status of the current buffer.
-Uses symbols defined in `lordar-mode-line-git-state-symbols'."
-  (when (and vc-mode buffer-file-name)
-    (when-let* ((state (vc-state buffer-file-name))
-                (symbol (lordar-mode-line-segments--git-state-get-symbol state)))
-      symbol)))
-
 (defun lordar-mode-line-segments--git-state-get-face (&optional state)
   "Return the face symbol for the Git STATE."
   (when (and vc-mode buffer-file-name)
@@ -589,7 +584,8 @@ Use FORMAT-STRING to change the output."
               (state-formatted (if format-string
                                    (format format-string state)
                                  state))
-              (face-symbol (lordar-mode-line-segments--git-state-get-face)))
+              (face-symbol (lordar-mode-line-segments--git-state-get-face
+                            (nth 2 lordar-mode-line-segments--git-branch-and-state))))
     (lordar-mode-line-segments--propertize state-formatted face-symbol)))
 
 ;;;; Segment Input Method
@@ -666,36 +662,23 @@ Use FORMAT-STRING to change the output."
 
 (defun lordar-mode-line-segments--syntax-checking-counters-update (&rest _args)
   "Update `lordar-mode-line-segments--syntax-checking-counters'."
-  (let* ((errors (lordar-mode-line-segments--syntax-checking-counter
-                  :error))
-         (warnings (lordar-mode-line-segments--syntax-checking-counter
-                    :warning))
-         (notes (lordar-mode-line-segments--syntax-checking-counter
-                 :note)))
+  (let ((errors 0)
+        (warnings 0)
+        (notes 0))
+    (when (bound-and-true-p flymake-mode)
+      (dolist (diag (flymake-diagnostics))
+        (let ((type (flymake-diagnostic-type diag)))
+          (cond
+           ((eq type :error)
+            (setq errors (1+ errors)))
+           ((eq type :warning)
+            (setq warnings (1+ warnings)))
+           ((eq type :note)
+            (setq notes (1+ notes)))))))
     (setq-local lordar-mode-line-segments--syntax-checking-counters
-                (list errors warnings notes))))
-
-(defun lordar-mode-line-segments--syntax-checking-counter (type)
-  "Return counter for TYPE :error, :warning or :note."
-  (cond
-   ((bound-and-true-p flymake-mode)
-    (lordar-mode-line-segments--syntax-checking-flymake-counter type)
-    ;; Not using the following as for some reason the cache is not immediately
-    ;; udpated. Using a function instead now.
-    ;; (cadadr (flymake--mode-line-counter type))
-    )
-   ((bound-and-true-p flycheck-mode)
-    ;; Not implemented as not using anymore.
-    (ignore))))
-
-(defun lordar-mode-line-segments--syntax-checking-flymake-counter (type)
-  "Return counter for TYPE :error, :warning or :note for flymake.."
-  (let* ((count 0))
-    (dolist (d (flymake-diagnostics))
-      (when (= (flymake--severity type)
-               (flymake--severity (flymake-diagnostic-type d)))
-        (setq count (+ 1 count))))
-    (number-to-string count)))
+                (list (number-to-string errors)
+                      (number-to-string warnings)
+                      (number-to-string notes)))))
 
 (defun lordar-mode-line-segments--syntax-checking (type &optional format-string
                                                         show-zero use-zero-faces)

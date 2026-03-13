@@ -2,6 +2,10 @@
 
 * Changelog
 
+** 0.5.0
+
+- =Changed= Performance improvements.
+
 ** 0.4.0
 
 - =Changed= Instead of calling the segment vc it is git now.
