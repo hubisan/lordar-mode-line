@@ -286,7 +286,7 @@
       (before-each
         (setq vc-mode " Git-develop")
         (setq buffer-file-name
-              "/home/test//lordar-mode-line/lordar-mode-line-segments")
+              "/home/test/lordar-mode-line/lordar-mode-line-segments")
         (spy-on 'vc-backend :and-return-value 'Git))
 
       (it "returns the Git branch with the correct face and format"
@@ -308,7 +308,7 @@
       (before-each
         (setq vc-mode " Git-develop")
         (setq buffer-file-name
-              "/home/test//lordar-mode-line/lordar-mode-line-segments")
+              "/home/test/lordar-mode-line/lordar-mode-line-segments")
         (spy-on 'vc-backend :and-return-value 'Git)
         (spy-on 'vc-state :and-return-value 'edited))
 
